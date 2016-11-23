@@ -43,7 +43,7 @@ Enter Chrom3D directory and compile the program by typing `make` in the terminal
   
 The resulting Chrom3D binary should then be created for you in this folder.
   
-Errors?  Please contact us (monikasekelja @ gmail.com).  
+Errors?  Please report them under [Issues](https://github.com/CollasLab/Chrom3D/issues)
   
   
 ## Test the installation by running a test simulation
