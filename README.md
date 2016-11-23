@@ -1,23 +1,34 @@
-# ABOUT
+# About
 Chrom3D is a computational framework for efficient reconstruction of 3D genome structures using chromosome contact data (Hi-C, TCC and 5C data) and optionally lamin ChIP-seq data.
 
+# Installation instructions
+Chrom3D is tested on MacOS & Linux. If you would like to test it under Windows, please write to us.
+
+The final structures from Chrom3D are saved in "cmm" format that can be visualized in Chimera (https://www.cgl.ucsf.edu/chimera/). R programming language (https://www.r-project.org/) can also be used to visualize the structures and preform statistical calculations, but this requires customized code (we provide examples below).
+
 # DOCUMENTATION
-https://chrom3d.atlassian.net/wiki/display/CHROM/
+https://github.com/CollasLab/Chrom3D/wiki
 
 # INSTALLATION
-simply type 'make', the resulting Chrom3D binary should then be created for you in this folder.
+Download Chrom3D source package by running following command in a terminal:
+'git clone https://github.com/CollasLab/Chrom3D.git' 
+or download the zip file from [text link] https://github.com/CollasLab/Chrom3D/archive/master.zip and extract the file to a prefered directory.
 
+Enter Chrom3D directory and compile the program by typing 'make' in the terminal.
+
+
+The resulting Chrom3D binary should then be created for you in this folder.
 
 If you get problems with the boost library:
 Chrom3D is dependent on the boost library. If you do not have it,  you can install it using (e.g. on Ubuntu):
-sudo apt-get install libboost-dev
+'sudo apt-get install libboost-dev'
 
 Otherwise, go to http://www.boost.org/users/download/
 
 If you have boost installed, but still have installation problems with 'make':
 Find the boost directory using following command:
 
-whereis boost
+'whereis boost'
 
 Then add the boost path to the Makefile:
 
