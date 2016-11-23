@@ -1,8 +1,11 @@
 # Chrom3D
 Chrom3D is a computational framework for efficient reconstruction of 3D genome structures using chromosome contact data (Hi-C, TCC and 5C data) and optionally lamin ChIP-seq data.
 
+
+
 # Installation instructions
 Chrom3D is tested on MacOS & Linux. If you try to install it under Windows, please send us a few words on how it went.
+
 
 ## Dependencies: 
 Chrom3D is dependent on the **boost library**. If you do not have it,  you can install it using (e.g. on Ubuntu):
@@ -66,16 +69,15 @@ The output should be as following (note that variations in scores can occur due 
 ```
 
 
+
 # Getting started using examples
 
 ## Global modelling: Reconstruction of toy-genome from toy gtrack file (15 min)
-./Chrom3D -o ./test_files/toy-global-example.cmm -r 3.0 --smart -n 50000 -l 5000 ./test_files/toy-global-example.gtrack
 * As input file, we will use toy-global-example.gtrack file found in Chrom3D/test_files directory consisting of 2x2 (diploid cell) chromosomes with information on pairwise chromsomal interactions and interactions with lamin-B-proteins
+
 * To reconstruct this toy-genome, run following command (explanation below).
 `./Chrom3D -o ./test_files/toy-global-example.cmm -r 3.0 --smart -n 50000 -l 5000 ./test_files/toy-global-example.gtrack`
-
 "-o ./test_files/toy-global-example.cmm" gives instructions to save the final output structure in cmm format in Chrom3D/test_files directory. The size of the nucleus (3.0 µm) is set using "-r 3.0". In addition to interaction and lamin constraints, we wish to use the smart constraint (--smart), so that all beads which are not associated with lamin proteins are pushed towards the center of the nucleus. We instruct the Chrom3D to run 50000 iterations (-n) and to give us information on model score every 5000 iterations. The input file is "./test_files/toy-global-example.gtrack".
-
 
 * The output from this command should look like this (note that the variations in scores can occur due to different versions of random number generators):
 ```
@@ -140,6 +142,7 @@ The parameter "-o ./test_files/GM12878.cmm" gives instructions to save the final
 18000 0 0 0 0 3.29339e+08
 20000 0 0 0 0 3.28557e+08
 ```
+
 * Use Chimera to visualize the final structure:
 `<chimera_install_dir>/UCSF-Chimera64-1.10.2/bin/chimera ./test_files/GM12878.cmm`
 
@@ -150,12 +153,15 @@ The parameter "-o ./test_files/GM12878.cmm" gives instructions to save the final
 
 ## Getting started with your own data
 Genome 3D reconstruction from Hi-C contact maps and lamin ChiP-seq data. Note: this section will be updated with more detailed information soon.
-* Pre-process your Hi-C data into Hi-C contact maps
-Several great tools exist, such as https://github.com/nservant/HiC-Pro and https://github.com/MWSchmid/HiCdat
-* Pre-process lamin ChiP-seq data
-The recommended pipeline for ChiP-seq data preprocessing and peak calling is https://github.com/CollasLab/edd
-* Fuse Hi-C contact maps and ChiP-seq data into a gtrack file
 
-We will provide a python script for this soon. The gtrack file format is described in more detail [here](https://hyperbrowser.uio.no/hb/u/hb-superuser/p/gtrack/).
+* Pre-process your Hi-C data into Hi-C contact maps
+ Several great tools exist, such as https://github.com/nservant/HiC-Pro and https://github.com/MWSchmid/HiCdat
+
+
+* Pre-process lamin ChiP-seq data
+ The recommended pipeline for ChiP-seq data preprocessing and peak calling is https://github.com/CollasLab/edd
+
+* Fuse Hi-C contact maps and ChiP-seq data into a gtrack file
+ We will provide a python script for this soon. The gtrack file format is described in more detail [here](https://hyperbrowser.uio.no/hb/u/hb-superuser/p/gtrack/).
 
 
