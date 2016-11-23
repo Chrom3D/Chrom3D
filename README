@@ -1,0 +1,38 @@
+# ABOUT
+Chrom3D is a computational framework for efficient reconstruction of 3D genome structures using chromosome contact data (Hi-C, TCC and 5C data) and optionally lamin ChIP-seq data.
+
+# DOCUMENTATION
+https://chrom3d.atlassian.net/wiki/display/CHROM/
+
+# INSTALLATION
+simply type 'make', the resulting Chrom3D binary should then be created for you in this folder.
+
+
+If you get problems with the boost library:
+Chrom3D is dependent on the boost library. If you do not have it,  you can install it using (e.g. on Ubuntu):
+sudo apt-get install libboost-dev
+
+Otherwise, go to http://www.boost.org/users/download/
+
+If you have boost installed, but still have installation problems with 'make':
+Find the boost directory using following command:
+
+whereis boost
+
+Then add the boost path to the Makefile:
+
+all:
+    g++ -I [insert path from 'whereis boost' here] -I $(TCLAPINCLUDE) $(SRCPATH)/Util.cpp $(SRCPATH)/Bead.cpp $(SRCPATH)/Chromosome.cpp $(SRCPATH)/Randomizer.cpp $(SRCPATH)/Constraint.cpp $(SRCPATH)/Model.cpp $(SRCPATH)/MCMC.cpp $(SRCPATH)/Chrom3D.cpp -o Chrom3D
+
+Then, 'make' should work.
+
+# RUNNING TESTS:
+Below, are two toy examples of small test-runs using Chrom3D:
+
+Global model:
+./Chrom3D -o ./test_files/toy-global-example.cmm -r 3.0 --smart -n 50000 -l 5000 ./test_files/toy-global-example.gtrack
+
+Local model:
+./Chrom3D -o ./test_files/GM12878.cmm -n 10000 -l 1000 -T 1.0 -c 0.0005 -e translate -e rotate ./test_files/GM12878.gtrack
+
+The resulting files can be visualized using Chimera: https://www.cgl.ucsf.edu/chimera/download.html
