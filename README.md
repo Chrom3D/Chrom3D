@@ -1,4 +1,4 @@
-# About
+# Chrom3D
 Chrom3D is a computational framework for efficient reconstruction of 3D genome structures using chromosome contact data (Hi-C, TCC and 5C data) and optionally lamin ChIP-seq data.
 
 # Installation instructions
@@ -6,10 +6,7 @@ Chrom3D is tested on MacOS & Linux. If you would like to test it under Windows, 
 
 The final structures from Chrom3D are saved in "cmm" format that can be visualized in Chimera (https://www.cgl.ucsf.edu/chimera/). R programming language (https://www.r-project.org/) can also be used to visualize the structures and preform statistical calculations, but this requires customized code (we provide examples below).
 
-# DOCUMENTATION
-https://github.com/CollasLab/Chrom3D/wiki
 
-# INSTALLATION
 Download Chrom3D source package by running following command in a terminal:
 'git clone https://github.com/CollasLab/Chrom3D.git' 
 or download the zip file from [text link] https://github.com/CollasLab/Chrom3D/archive/master.zip and extract the file to a prefered directory.
