@@ -1,6 +1,8 @@
 # Chrom3D
+![3D_genome_structure](http://collaslab.org/wp-content/uploads/2016/11/3D_model_illustration_hic.png)
+
 Chrom3D is a computational framework for efficient reconstruction of 3D genome structures using chromosome contact data (Hi-C, TCC and 5C data) and optionally lamin ChIP-seq data.  
-  
+
   
   
 # Installation instructions
@@ -8,7 +10,7 @@ Chrom3D is tested on MacOS & Linux. If you try to install it under Windows, plea
   
   
 ## Dependencies: 
-Chrom3D is dependent on the **boost library**. If you do not have it,  you can install it using (e.g. on Ubuntu):
+Chrom3D is dependent on the **boost library** (>=1.54). If you do not have it,  you can install it using (e.g. on Ubuntu):
 
 `sudo apt-get install libboost-dev`
   
@@ -171,5 +173,32 @@ Genome 3D reconstruction from Hi-C contact maps and lamin ChiP-seq data. Note: t
   
 * Fuse Hi-C contact maps and ChiP-seq data into a gtrack file
 > We will provide a python script for this soon. The gtrack file format is described in more detail [here](https://hyperbrowser.uio.no/hb/u/hb-superuser/p/gtrack/).
+
+## Parameter information
+
+### Constraints
+
+* **Center constraint** is used when we wish to push all beads towards the center of the nucleus.
+
+* **Nucleus constraint** is applied on a bead, it will seek to place itself within the nuclear boundary.
+
+* **Smart constraint** is recommended when gtrack file contains information on lamin-associations. Then, Chrom3D will set a center constraint on all beads that are not lamin-associated.
+
+### The random moves
+
+The chromosome/bead moves used by Chrom3D are illustrated below:
+![ChromosomeMoves](http://collaslab.org/wp-content/uploads/2016/11/RandomMoves.png)
+
+### Temperature parameter and cooling rate
+The default value of temperature T parameter is 1 and cooling rate c is 0. This means that the default optimization is based on Metropolis-Hastings algorithm since T does not influence the acceptance probability of the “bad” move. If you wish to use [simulated annealing](https://en.wikipedia.org/wiki/Simulated_annealing) approach, you need to set the value of the cooling rate c between 0 and 1. The temperature T parameter will decrease gradually during the simulation with the slope determined by c (Tnew = Tprevious*(1-c) for each accepted move. The idea behind cooling down the temperature during optimization is to speed up the convergence. It is, however, difficult to determine which cooling rate is appropriate to use and we recommend trying out different values. The rate will be dependent on the total number of iterations you wish to run during simulation and how steep you wish to narrow down the search.
+
+We recommend to have a smooth decrease of T, obtained by setting the cooling rate to c=5/n, where n is the total number of iterations. For 100000 iterations, the cooling rate will be 0.00005 with following steepness:
+![Temp1](http://collaslab.org/wp-content/uploads/2016/11/Temp1.png)
+
+When x > 5 in c=x/n, the steepness will increase. For instance, if we choose to use c=15/n for 100000 iterations c is 0.00015, our optimization will not be able to explore the solution space very efficiently because it will be stuck in a minimum:
+![Temp2](http://collaslab.org/wp-content/uploads/2016/11/Temp2.png)
+
+When x < 5 in c=x/n, the steepness will decrease. For instance, if we choose to use c=1/n for 100000 iterations c is 0.00001, our optimization will explore the solution space in the beginning and slowly narrow down the search space:
+![Temp3](http://collaslab.org/wp-content/uploads/2016/11/Temp3.png)
 
 
