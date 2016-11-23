@@ -125,7 +125,8 @@ The output should be as following (note that variations in scores can occur due 
   
   
 ## Local modelling: Reconstruction of 3D structure of a genomic region (10 min)
-* As input file, we will use GM12878.gtrack file found in Chrom3D/test_files directory. This gtrack file is constructed using 5-C data from α-globin gene locus for GM12878 cell type whose 3D conformation has previously been inferred in Bau D. et al 2011. Nat.Struct.Mol.Biiol. 
+* As input file, we 
+use GM12878.gtrack file found in Chrom3D/test_files directory. This gtrack file is constructed using 5-C data from α-globin gene locus for GM12878 cell type whose 3D conformation has previously been inferred in Bau D. et al 2011. Nat.Struct.Mol.Biiol. 
   
 * To reconstruct this genomic region, run following command (explanation below).
 `./Chrom3D -o ./test_files/GM12878.cmm -n 10000 -l 1000 -T 1.0 -c 0.0005 -e translate -e rotate ./test_files/GM12878.gtrack`
@@ -163,7 +164,7 @@ The output should be as following (note that variations in scores can occur due 
   
   
 ## Getting started with your own data
-Genome 3D reconstruction from Hi-C contact maps and lamin ChiP-seq data. Note: this section will be updated with more detailed information soon.
+Genome 3D reconstruction from Hi-C contact maps and lamin ChiP-seq data. 
   
 * Pre-process your Hi-C data into Hi-C contact maps
 > Several great tools exist, such as https://github.com/nservant/HiC-Pro and https://github.com/MWSchmid/HiCdat
@@ -172,7 +173,7 @@ Genome 3D reconstruction from Hi-C contact maps and lamin ChiP-seq data. Note: t
 > The recommended pipeline for ChiP-seq data preprocessing and peak calling is https://github.com/CollasLab/edd
   
 * Fuse Hi-C contact maps and ChiP-seq data into a gtrack file
-> We will provide a python script for this soon. The gtrack file format is described in more detail [here](https://hyperbrowser.uio.no/hb/u/hb-superuser/p/gtrack/).
+> The gtrack file format is described in more detail [here](https://hyperbrowser.uio.no/hb/u/hb-superuser/p/gtrack/).
 
 ## Parameter information
 
