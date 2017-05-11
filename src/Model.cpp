@@ -402,7 +402,7 @@ string Model::getCMM() {
   uint prevId=0;
   for(chriter = chromosomes.begin(); chriter != chromosomes.end(); chriter++) {
     for(beaditer = chriter->begin(); beaditer != chriter->end(); beaditer++) {
-      res << "<marker id=\"" << counter << "\" x=\"" << beaditer->getX() << "\"  y=\"" << beaditer->getY() << "\" z=\"" << beaditer->getZ() << "\" radius=\"" << beaditer->getRadius() << "\" r=\"" << beaditer->color[0] << "\" g=\"" << beaditer->color[1] << "\" b=\"" << beaditer->color[2] << "\" chrID=\"" << chriter->getName() << "\" beadID=\"" << beaditer->getID() << "\"/>" << endl;
+      res << "<marker id=\"" << counter << "\" x=\"" << beaditer->getX() << "\" y=\"" << beaditer->getY() << "\" z=\"" << beaditer->getZ() << "\" radius=\"" << beaditer->getRadius() << "\" r=\"" << beaditer->color[0] << "\" g=\"" << beaditer->color[1] << "\" b=\"" << beaditer->color[2] << "\" chrID=\"" << chriter->getName() << "\" beadID=\"" << beaditer->getID() << "\"/>" << endl;
 
       if(prevChr == chriter->getName()) {
 	res << "<link id1=\"" << prevId << "\" id2=\"" << counter << "\" r=\"" << beaditer->color[0] << "\" g=\"" << beaditer->color[1] << "\" b=\"" << beaditer->color[2] << "\" radius=\"" << linkRadius << "\"/>" << endl;
