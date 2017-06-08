@@ -82,8 +82,8 @@ Args parseArguments(int argc, char** argv) {
     TCLAP::MultiArg<string> excludeArg("e", "exclude", "Chromatin moves to exclude from the simulations", false, &allowedVals);
 
 
-    TCLAP::SwitchArg centerSwitch("","center","Add constraints such that all beads are pushed towards the center of the nucleus", false);
-    TCLAP::SwitchArg nucleusSwitch("","nucleus","Add constraints such that all beads are pushed towards the inside of the nucleus", false);
+    //TCLAP::SwitchArg centerSwitch("","center","Add constraints such that all beads are pushed towards the center of the nucleus", false);
+    //TCLAP::SwitchArg nucleusSwitch("","nucleus","Add constraints such that all beads are pushed towards the inside of the nucleus", false);
 
     TCLAP::SwitchArg printfilesSwitch("","printmodels","Print intermediate models in CMM format (at intervals specified by -l/--log) with names consisting of the model name (specified by -m/--modelname) and the iteration number.", false);
 
@@ -91,8 +91,8 @@ Args parseArguments(int argc, char** argv) {
     //////
     cmd.add( printfilesSwitch );
     cmd.add( excludeArg );
-    cmd.add( centerSwitch );
-    cmd.add( nucleusSwitch );
+    //cmd.add( centerSwitch );
+    //cmd.add( nucleusSwitch );
 
     cmd.add( verboseArg );
     cmd.add( seedArg );
@@ -120,8 +120,8 @@ Args parseArguments(int argc, char** argv) {
     args.occupancy = occupancyArg.getValue();
     args.modelName = modelnameArg.getValue();
 
-    args.centerConstraint = centerSwitch.getValue();
-    args.nucleusConstraint = nucleusSwitch.getValue();
+    //args.centerConstraint = centerSwitch.getValue();
+    //args.nucleusConstraint = nucleusSwitch.getValue();
 
       
     args.excludeMoves = excludeArg.getValue();
@@ -156,13 +156,13 @@ int main(int argc, char** argv) {
     model.readGtrack(fileName, false);
   }
 
-  if(args.centerConstraint) {
-    model.addCenterConstraints();
-  }
+  //if(args.centerConstraint) {
+  //  model.addCenterConstraints();
+  //}
   
-  if(args.nucleusConstraint) {
-    model.addNucleusConstraints();
-  }
+  //if(args.nucleusConstraint) {
+  //  model.addNucleusConstraints();
+  //}
 
   
   if( find(args.excludeMoves.begin(), args.excludeMoves.end(), "crankshaft") ==  args.excludeMoves.end()) {
