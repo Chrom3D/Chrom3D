@@ -102,11 +102,11 @@ void Model::addNucleusConstraint(string beadId, double springConstant /*=1*/) {
   this->addConstraint(Constraint(b1, &(this->centerBead), this->nucleusRadius - b1->getRadius(), NUCLEUS, springConstant, this->nucleusRadius - b1->getRadius()));
 }
 
-void Model::addLaminConstraint(string beadId, double springConstant /*=1*/) {
+void Model::addPeripheryConstraint(string beadId, double springConstant /*=1*/) {
   assert(this->hasNucleus);
   assert(getBead.find(beadId) != getBead.end()); 
   Bead* b1 = getBead[beadId];  
-  this->addConstraint(Constraint(b1, &(this->centerBead), this->nucleusRadius - b1->getRadius(), LAMIN, springConstant));
+  this->addConstraint(Constraint(b1, &(this->centerBead), this->nucleusRadius - b1->getRadius(), PERIPHERY, springConstant));
 }
 
 void Model::addCenterConstraint(string beadId, double springConstant /*=1*/) {
@@ -428,26 +428,31 @@ void Model::readGtrack(string filename, bool scaleBeadSizes/*=false*/, double nu
   ifstream myfile(filename.c_str());
   assert(myfile.is_open());
 
+  typedef std::pair<std::string, std::string> idPair;
+  
   vector<string> header;
 
   map<string,Chromosome> chromosomes;
   map<string, string> beadId2chr;
-  vector<string> laminIds;
+  vector<string> peripheryIds;
+  vector<string> centerIds;
   vector<pair<string,string> > interactionIds;
   vector<pair<string,string> > interactionDistanceIds;
   vector<pair<string,string> > nonInteractionDistanceIds;
-  std::map<string,double> distInfo;
-  std::map<string,double> weightInfo;
-  std::map<string,double> boundaryInfo;
-
-  bool hasLamin = false;
+  std::map<idPair,double> distInfo;
+  std::map<idPair,double> weightInfo;
+  std::map<idPair,double> boundaryInfo;
+  std::map<string,double> peripheryWeight;
+  std::map<string,double> centerWeight;
+  
+  bool hasPeriphery = false;
   bool hasEdges = false;
   bool hasColor = false;
   
   while(getline(myfile,line)) {    
     if(line.substr(0,3) == "###") {
       header = util::split(line.substr(3),'\t');
-      hasLamin = find(header.begin(), header.end(), "lamin") != header.end();
+      hasPeriphery = find(header.begin(), header.end(), "periphery") != header.end();
       hasEdges = find(header.begin(), header.end(), "edges") != header.end();
       hasColor = find(header.begin(), header.end(), "color") != header.end();      
     }
@@ -455,7 +460,7 @@ void Model::readGtrack(string filename, bool scaleBeadSizes/*=false*/, double nu
       continue;
     }
 
-    if(hasLamin) {
+    if(hasPeriphery) {
       assert(this->hasNucleus);
     }
 
@@ -476,19 +481,35 @@ void Model::readGtrack(string filename, bool scaleBeadSizes/*=false*/, double nu
       vector<string> col = util::split(fieldParser["color"], ',');
       myBead.setColor(boost::lexical_cast<float>(col[0]), boost::lexical_cast<float>(col[1]), boost::lexical_cast<float>(col[2]));
     }
-    
-    
-    
+        
     chromosomes[fieldParser["seqid"]].addBead(myBead);
 
-    if(hasLamin and fieldParser["lamin"] == "1") {
-      laminIds.push_back(fieldParser["id"]);
+    if(hasPeriphery and fieldParser["periphery"] != ".") { 
+      if (fieldParser["periphery"] == "1") {
+	peripheryIds.push_back(fieldParser["id"]);
+      }
+      if (fieldParser["periphery"] == "0") {
+	centerIds.push_back(fieldParser["id"]);
+      }
+      if (fieldParser["periphery"].find(",") != std::string::npos) { // has periphery-weights
+	if( util::splitDbl(fieldParser["periphery"], ',')[0] == 1) {
+	  peripheryIds.push_back(fieldParser["id"]);
+	  peripheryWeight[fieldParser["id"]] = util::splitDbl(fieldParser["periphery"], ',')[1];
+	}
+	else if( util::splitDbl(fieldParser["periphery"], ',')[0] == 0) {
+	  centerIds.push_back(fieldParser["id"]);
+	  centerWeight[fieldParser["id"]] = util::splitDbl(fieldParser["periphery"], ',')[1];
+	}
+	else {
+	  assert(false); // 'periphery' can be either 0 or 1.
+	}	  
+	
+      }
     }
-
 
     if(hasEdges and fieldParser["edges"] != ".") {
       vector<string> edgeList = util::split(fieldParser["edges"], ';');
-      pair<string, string> idPair1;
+      idPair idPair1;
       string b2id;
       for(uint i=0; i!=edgeList.size(); i++) {
         b2id = edgeList[i];
@@ -500,8 +521,7 @@ void Model::readGtrack(string filename, bool scaleBeadSizes/*=false*/, double nu
             interactionIds.push_back(idPair1); // idPair2 should not be added here, since addConstraint will add both pairs automatically
           }
         }
-        else
-        { // edge information contains edge weights
+        else {// edge information contains edge weights
           b2id = edgeList[i].substr(0,edgeList[i].find("="));
           string edgeInfoAll =  edgeList[i].substr(edgeList[i].find("=")+1);
           idPair1 = make_pair(fieldParser["id"], b2id);
@@ -514,34 +534,42 @@ void Model::readGtrack(string filename, bool scaleBeadSizes/*=false*/, double nu
             }
           }
           else{ // split edge information
-            vector<double> edgeInfoDetail = util::splitDbl(edgeInfoAll,','); 
-            assert(edgeInfoDetail.size()==3);
-            assert(edgeInfoDetail[1] > 0);
-            assert(edgeInfoDetail[2] == 0 or edgeInfoDetail[2]==1);
-            // edgeInfoDetail contains [0]=distance (double), [1]=weight (<0,1]), [2]=boundary (0/1). 
-            // If boundary is 1, define distance as the minimum required between the two "interacting" beads. (penalty for smaller distance than this defined distance)
-            // If boundary is 0, use distance as the desired distance between the beads (penalty for larger distance than this defined distance)
-            if(edgeInfoDetail[2]==0){
-              interactionDistanceIds.push_back(idPair1);
-            }
-            else{
-              nonInteractionDistanceIds.push_back(idPair1);
-            } 
+            vector<double> edgeInfoDetail = util::splitDbl(edgeInfoAll,',');
+	    if(edgeInfoDetail.size() == 3) { // link information with 0) Distance, 1) Weight and 2) Boundary info
+	      assert(edgeInfoDetail[1] > 0);
+	      assert(edgeInfoDetail[2] == 0 or edgeInfoDetail[2]==1);
+	      // edgeInfoDetail contains [0]=distance (double), [1]=weight (<0,1]), [2]=boundary (0/1). 
+	      // If boundary is 1, define distance as the minimum required between the two "interacting" beads. (penalty for smaller distance than this defined distance)
+	      // If boundary is 0, use distance as the desired distance between the beads (penalty for larger distance than this defined distance)
+	      if(edgeInfoDetail[2]==0){
+		interactionDistanceIds.push_back(idPair1);
+	      }
+	      else{
+		nonInteractionDistanceIds.push_back(idPair1);
+	      } 
                      
-            // Create bead_id pair first value as a string with comma as delimiter: "beadID1,beadID2"
-            string myFirstValue = fieldParser["id"] + "," + b2id;
-            distInfo[myFirstValue] = edgeInfoDetail[0];
-            weightInfo[myFirstValue] = edgeInfoDetail[1];
-            boundaryInfo[myFirstValue] = edgeInfoDetail[2];
+	      distInfo[idPair1] = edgeInfoDetail[0];
+	      weightInfo[idPair1] = edgeInfoDetail[1];
+	      boundaryInfo[idPair1] = edgeInfoDetail[2];
+	    }
+	    else if(edgeInfoDetail.size() == 1) { // Only one number, gives the weight on that link.
+	      assert(edgeInfoDetail[0] > 0);
+	      interactionIds.push_back(idPair1);
+	      weightInfo[idPair1] = edgeInfoDetail[0];	      
+	    }
+	    else {
+	      assert(false);
+	    }
+	    
           }
           
         }
     
       }
     }
-
-
   }
+
+
   myfile.close();
   
 
@@ -566,11 +594,13 @@ void Model::readGtrack(string filename, bool scaleBeadSizes/*=false*/, double nu
   // Adding Interactions:
   for(vector<pair<string,string> >::iterator it = interactionIds.begin();  it != interactionIds.end(); it++) {
     //cout <<it->first << " " << it->second << endl;
+    std::map<idPair,double>::iterator itWeight = weightInfo.find(*it);
+    double weight = (itWeight != weightInfo.end()) ? itWeight->second : 1;
     if(beadId2chr[it->first] == beadId2chr[it->second]) {
-      this->addInteractionConstraint(it->first, it->second, 1, INTERACTION_INTRA);
+      this->addInteractionConstraint(it->first, it->second, weight, INTERACTION_INTRA);
     }
     else {
-      this->addInteractionConstraint(it->first, it->second, 1, INTERACTION_INTER);
+      this->addInteractionConstraint(it->first, it->second, weight, INTERACTION_INTER);
     }
   }
 
@@ -578,9 +608,9 @@ void Model::readGtrack(string filename, bool scaleBeadSizes/*=false*/, double nu
   for(vector<pair<string,string> >::iterator it = interactionDistanceIds.begin();  it != interactionDistanceIds.end(); it++) {
     
     // Obtaining distance and weight information
-    string keyString = it->first + "," + it->second;
-    std::map<string,double>::iterator itDist = distInfo.find(keyString);
-    std::map<string,double>::iterator itWeight = weightInfo.find(keyString);
+    std::map<idPair,double>::iterator itDist = distInfo.find(*it);
+
+   std::map<idPair,double>::iterator itWeight = weightInfo.find(*it);
    
     
     this->addInteractionDistanceConstraint(it->first, it->second, itDist->second, itWeight->second, INTERACTION_DIST);
@@ -591,19 +621,32 @@ void Model::readGtrack(string filename, bool scaleBeadSizes/*=false*/, double nu
   for(vector<pair<string,string> >::iterator it = nonInteractionDistanceIds.begin();  it != nonInteractionDistanceIds.end(); it++) {
     
     // Obtaining distance and weight information
-    string keyString = it->first + "," + it->second;
-    std::map<string,double>::iterator itDist = distInfo.find(keyString);
-    std::map<string,double>::iterator itWeight = weightInfo.find(keyString);
+    std::map<idPair,double>::iterator itDist = distInfo.find(*it);
+    std::map<idPair,double>::iterator itWeight = weightInfo.find(*it);
    
-    
     this->addNonInteractionDistanceConstraint(it->first, it->second, itDist->second, itWeight->second, NON_INTERACTION_DIST);
   }
 
-  // Adding lamin:
-  
-  for(vector<string>::iterator it = laminIds.begin();  it != laminIds.end(); it++) {
-    this->addLaminConstraint(*it);
-  }  
+  // Adding periphery:
+  double w;
+  for(vector<string>::iterator it = peripheryIds.begin();  it != peripheryIds.end(); it++) {
+    w = 1.0;
+    if(peripheryWeight.find(*it) != peripheryWeight.end()) {
+      w = peripheryWeight[*it];
+    }
+    this->addPeripheryConstraint(*it,w);
+  }
+
+
+  // Adding center contraint:
+  for(vector<string>::iterator it = centerIds.begin(); it != centerIds.end(); it++) {
+    w = 1.0;
+    if(centerWeight.find(*it) != centerWeight.end()) {
+      w = centerWeight[*it];
+    }    
+    this->addCenterConstraint(*it,w);
+  }
+
 
   // Initialize structures randomly:
   this->resetAllChromosomes(1000); //, true);
@@ -611,12 +654,15 @@ void Model::readGtrack(string filename, bool scaleBeadSizes/*=false*/, double nu
   uint N=this->getNumberOfBeads();
   cerr << "# beads: " << N << endl;
   cerr << "# interactions: " << interactionIds.size() << endl;
+  cerr << "# interactions with given weight: " << weightInfo.size() << endl;
   cerr << "# interactions with given distance: " << interactionDistanceIds.size() << endl;
   cerr << "# non-interactions with given minimum distance: " << nonInteractionDistanceIds.size() << endl;
-  cerr << "# lamin beads: " << laminIds.size() << endl;
-  cerr << "# non-lamin beads: " << N-laminIds.size() << endl;  
+  cerr << "# periphery beads: " << peripheryIds.size() << endl;
+  cerr << "# periphery beads (with weights): " << peripheryWeight.size() << endl;
+  cerr << "# center beads: " << centerIds.size() << endl;
+  cerr << "# center beads (with weights): " << centerWeight.size() << endl;  
 
-}
+  }
 
 double Model::getTotalChrLength() {
   vector<Chromosome>::iterator chriter;
@@ -713,32 +759,6 @@ void Model::addCenterConstraints(double springConstant /*=1*/) {
 }
 
 
-
-void Model::addSmartConstraints(double springConstant /*=1*/) {
-  // Adds CenterConstraint to all non-lamin beads
-  vector<Chromosome>::iterator chriter;
-  boost::container::static_vector<Bead,MAXSIZE>::iterator beaditer; 
-  map<string,vector<Constraint> >::iterator cmap_it;
-  vector<Constraint>::iterator c_it;  
-  bool haslamin;
-  for(chriter = chromosomes.begin(); chriter != chromosomes.end(); chriter++) {
-    for(beaditer=chriter->begin(); beaditer!=chriter->end(); beaditer++) {
-      haslamin = false;
-      cmap_it = constraints.find(beaditer->getID());      
-      if(cmap_it != constraints.end()) { // If bead has constraints, loop through and look for 'LAMIN':
-	for(c_it = cmap_it->second.begin(); c_it != cmap_it->second.end();c_it++) {
-	  if(c_it->getConstraintType() == "LAMIN") {
-	    haslamin = true;
-	  }
-	}
-      }    
-      if(!haslamin) {
-        this->addCenterConstraint(beaditer->getID(),springConstant);
-      }
-    } 
-  } 
-}
-
 std::vector<double> Model::calculateScorePerConstraint(Chromosome& chr, uint startPos, uint endPos){
   
   std::vector<double> myScore(C_T_COUNT,0.0);
@@ -754,7 +774,7 @@ std::vector<double> Model::calculateScorePerConstraint(Chromosome& chr, uint sta
         myScore[it2->getConstraintTypeID()] += it2->eval();
       }
     }
-  }
+   }
   
   return myScore;
 }

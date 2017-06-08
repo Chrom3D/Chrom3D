@@ -1,22 +1,7 @@
 #ifndef GUARD_UTIL_H
 #define GUARD_UTIL_H
 
-
-#if defined(_MSC_VER) && (_MSC_VER >= 1500) // Visual Studio 2008 or higher
-    #include <random>
-#endif
-
-#if defined(__GNUC__) && (__GNUC__ * 100 + __GNUC_MINOR__ >= 402) // GCC 4.2 or higher
-    #include <tr1/random>
-#endif
-
-#if defined(__APPLE__)
-    #include <stdint.h>
-#endif
-
-
-
-
+#include <stdint.h>
 #include <numeric>
 #include <vector>
 

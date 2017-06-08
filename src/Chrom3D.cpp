@@ -34,15 +34,14 @@ struct Args {
   vector<string> excludeMoves;
   bool centerConstraint;
   bool nucleusConstraint;
-  bool smartConstraint;
   bool printStructures;
 };
 
 Args parseArguments(int argc, char** argv) {
-  string VERSION="1.0";
+  string VERSION="1.0.1";
   Args args;
     try {  
-    TCLAP::CmdLine cmd("Chrom3D is a 3D genome modeling platform designed to incorporate a versatile set of constraints. For example, Chrom3D can simultaneously incorporate chromosomal interaction constraints (such as Hi-C) and constraints from chromosome association with the nuclear lamina, at the nuclear periphery." , ' ', VERSION);
+    TCLAP::CmdLine cmd("Chrom3D is a 3D genome modeling platform designed to incorporate a versatile set of constraints. For example, Chrom3D can simultaneously incorporate chromosomal interaction constraints (such as Hi-C) and constraints from chromosome association with the nuclear periphery." , ' ', VERSION);
 
     TCLAP::UnlabeledValueArg<string> nolabel( "filename", "Input file In gtrack format", true, "/dev/null", "Gtrack file"  );
     cmd.add( nolabel );	
@@ -85,7 +84,6 @@ Args parseArguments(int argc, char** argv) {
 
     TCLAP::SwitchArg centerSwitch("","center","Add constraints such that all beads are pushed towards the center of the nucleus", false);
     TCLAP::SwitchArg nucleusSwitch("","nucleus","Add constraints such that all beads are pushed towards the inside of the nucleus", false);
-    TCLAP::SwitchArg smartSwitch("","smart","Add constraints such that all non-lamin beads are pushed towards the nucleus center", false);
 
     TCLAP::SwitchArg printfilesSwitch("","printmodels","Print intermediate models in CMM format (at intervals specified by -l/--log) with names consisting of the model name (specified by -m/--modelname) and the iteration number.", false);
 
@@ -95,7 +93,7 @@ Args parseArguments(int argc, char** argv) {
     cmd.add( excludeArg );
     cmd.add( centerSwitch );
     cmd.add( nucleusSwitch );
-    cmd.add( smartSwitch );
+
     cmd.add( verboseArg );
     cmd.add( seedArg );
     cmd.add( occupancyArg );
@@ -124,7 +122,7 @@ Args parseArguments(int argc, char** argv) {
 
     args.centerConstraint = centerSwitch.getValue();
     args.nucleusConstraint = nucleusSwitch.getValue();
-    args.smartConstraint = smartSwitch.getValue();
+
       
     args.excludeMoves = excludeArg.getValue();
 
@@ -165,9 +163,6 @@ int main(int argc, char** argv) {
   if(args.nucleusConstraint) {
     model.addNucleusConstraints();
   }
-  if(args.smartConstraint) {
-    model.addSmartConstraints();
-  }
 
   
   if( find(args.excludeMoves.begin(), args.excludeMoves.end(), "crankshaft") ==  args.excludeMoves.end()) {
@@ -202,7 +197,7 @@ int main(int argc, char** argv) {
 
    
   if(args.verbose != 0) {
-    cerr << "0 " << model.getLossScore(INTERACTION_INTRA) << " " << model.getLossScore(INTERACTION_INTER) << " " << model.getLossScore(LAMIN) << " " << model.getLossScore(CENTER) << " " << model.getLossScore(BOUNDARY) << " " << model.getLossScore(NUCLEUS) << " " << model.getLossScore(INTERACTION_DIST)<< " " << model.getLossScore(NON_INTERACTION_DIST) << " " << model.getLossScore() << endl;
+    cerr << "0 " << model.getLossScore(INTERACTION_INTRA) << " " << model.getLossScore(INTERACTION_INTER) << " " << model.getLossScore(PERIPHERY) << " " << model.getLossScore(CENTER) << " " << model.getLossScore(BOUNDARY) << " " << model.getLossScore(NUCLEUS) << " " << model.getLossScore(INTERACTION_DIST)<< " " << model.getLossScore(NON_INTERACTION_DIST) << " " << model.getLossScore() << endl;
 
   }
   
@@ -215,7 +210,7 @@ int main(int argc, char** argv) {
       if(args.printStructures) {
 	model.writeCMM(args.modelName + "_iter_" + SSTR(i) + ".cmm");
       }
-      cerr << i << " " << model.getLossScore(INTERACTION_INTRA) << " " << model.getLossScore(INTERACTION_INTER) << " " << model.getLossScore(LAMIN) << " " << model.getLossScore(CENTER) << " " << model.getLossScore(INTERACTION_DIST)<< " " << model.getLossScore(NON_INTERACTION_DIST) << " " << model.getLossScore() << endl;
+      cerr << i << " " << model.getLossScore(INTERACTION_INTRA) << " " << model.getLossScore(INTERACTION_INTER) << " " << model.getLossScore(PERIPHERY) << " " << model.getLossScore(CENTER) << " " << model.getLossScore(INTERACTION_DIST)<< " " << model.getLossScore(NON_INTERACTION_DIST) << " " << model.getLossScore() << endl;
     }
   }
 

@@ -29,7 +29,7 @@ string Constraint::getConstraintType(){
 
   switch(this->constType){
     case INTERACTION: return "INTERACTION";
-    case LAMIN: return "LAMIN";
+    case PERIPHERY: return "PERIPHERY";
     case NUCLEUS: return "NUCLEUS";
     case BOUNDARY: return "BOUNDARY";
     case CENTER: return "CENTER";

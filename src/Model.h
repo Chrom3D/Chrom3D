@@ -42,7 +42,7 @@ class Model {
   void addBoundaryConstraint(std::string, double, double springConstant=1.0);
   void addNucleusConstraint(std::string, double springConstant=1.0);
   void addCenterConstraint(std::string, double springConstant=1.0);
-  void addLaminConstraint(std::string, double springConstant=1.0);
+  void addPeripheryConstraint(std::string, double springConstant=1.0);
   void addRandomizer(Randomizer*, double weight=1.0);
   void removeAllRandomizers();
   double getPartialLossScore(Chromosome&, uint, uint);
