@@ -66,26 +66,34 @@ void Model::addInteractionConstraint(string beadId1, string beadId2, double spri
   this->addConstraint(beadId1, beadId2, b1->getRadius()+b2->getRadius(), interactionType, springConstant);
 }
 
-void Model::addInteractionDistanceConstraint(string beadId1, string beadId2, double beadPairDesiredDistance, double springConstant /*=1*/, ConstraintType interactionType/*= INTERACTION_DIST*/) {
+void Model::addInteractionDistanceConstraint(string beadId1, string beadId2, double beadPairDesiredDistance, double springConstant /*=1*/) {
   assert(getBead.find(beadId1) != getBead.end()); 
   assert(getBead.find(beadId2) != getBead.end());
-  assert(interactionType == INTERACTION_DIST);
 
   Bead* b1 = getBead[beadId1];
   Bead* b2 = getBead[beadId2];
-  this->addConstraint(beadId1, beadId2, b1->getRadius()+b2->getRadius() + beadPairDesiredDistance, interactionType, springConstant, b1->getRadius()+b2->getRadius() + beadPairDesiredDistance);
+  this->addConstraint(beadId1, beadId2, b1->getRadius()+b2->getRadius() + beadPairDesiredDistance, INTERACTION_DIST, springConstant);
 }
 
 
-void Model::addNonInteractionDistanceConstraint(string beadId1, string beadId2, double beadPairRequiredAboveDistance, double springConstant /*=1*/, ConstraintType interactionType/*= INTERACTION_DIST*/) {
+void Model::addInteractionLowerDistanceConstraint(string beadId1, string beadId2, double beadPairDesiredDistance, double springConstant /*=1*/) {
   assert(getBead.find(beadId1) != getBead.end()); 
   assert(getBead.find(beadId2) != getBead.end());
-  assert(interactionType == NON_INTERACTION_DIST);
 
   Bead* b1 = getBead[beadId1];
   Bead* b2 = getBead[beadId2];
-  this->addConstraint(beadId1, beadId2, b1->getRadius()+b2->getRadius() + beadPairRequiredAboveDistance, interactionType, springConstant, 0, b1->getRadius()+b2->getRadius() + beadPairRequiredAboveDistance);
+  this->addConstraint(beadId1, beadId2, b1->getRadius()+b2->getRadius() + beadPairDesiredDistance, INTERACTION_DIST, springConstant, 0, b1->getRadius()+b2->getRadius() + beadPairDesiredDistance);
 }
+
+void Model::addInteractionUpperDistanceConstraint(string beadId1, string beadId2, double beadPairDesiredDistance, double springConstant /*=1*/) {
+  assert(getBead.find(beadId1) != getBead.end()); 
+  assert(getBead.find(beadId2) != getBead.end());
+
+  Bead* b1 = getBead[beadId1];
+  Bead* b2 = getBead[beadId2];
+  this->addConstraint(beadId1, beadId2, b1->getRadius()+b2->getRadius() + beadPairDesiredDistance, INTERACTION_DIST, springConstant, b1->getRadius()+b2->getRadius() + beadPairDesiredDistance);
+}
+
 
 // Method addBoundary Constraint is not used at the moment
 void Model::addBoundaryConstraint(string beadId, double boundaryRadius, double springConstant /*=1*/) {
@@ -188,7 +196,7 @@ double Model::getLossScore() {
   for(it1 = constraints.begin(); it1 != constraints.end(); it1++) {
       for(it2 = it1->second.begin(); it2 != it1->second.end(); it2++) {
 	constraintType = it2->getConstraintType();
-	if(constraintType == "INTERACTION" || constraintType == "INTERACTION_DIST" || constraintType == "NON_INTERACTION_DIST" || constraintType == "INTERACTION_INTRA" || "INTERACTION_INTER") {
+	if(constraintType == "INTERACTION" || constraintType == "INTERACTION_DIST" || constraintType == "INTERACTION_INTRA" || "INTERACTION_INTER") {
 	  res += it2->eval()/2;
 	}
 	else {
@@ -208,7 +216,7 @@ double Model::getLossScore(ConstraintType ctype) {
       for(it2 = it1->second.begin(); it2 != it1->second.end(); it2++) {
 	if(it2->constType == ctype) {
 	  constraintType = it2->getConstraintType();
-	  if(constraintType == "INTERACTION" || constraintType == "INTERACTION_DIST" || constraintType == "NON_INTERACTION_DIST" || constraintType == "INTERACTION_INTRA" || "INTERACTION_INTER") {
+	  if(constraintType == "INTERACTION" || constraintType == "INTERACTION_DIST" || constraintType == "INTERACTION_INTRA" || "INTERACTION_INTER") {
 	   res += it2->eval()/2;
 	  }
 	  else {
@@ -438,23 +446,29 @@ void Model::readGtrack(string filename, bool scaleBeadSizes/*=false*/, double nu
   vector<string> centerIds;
   vector<pair<string,string> > interactionIds;
   vector<pair<string,string> > interactionDistanceIds;
-  vector<pair<string,string> > nonInteractionDistanceIds;
+  vector<pair<string,string> > interactionLowerDistanceIds;
+  vector<pair<string,string> > interactionUpperDistanceIds;
+  //vector<pair<string,string> > nonInteractionDistanceIds;
+
+
   std::map<idPair,double> distInfo;
   std::map<idPair,double> weightInfo;
-  std::map<idPair,double> boundaryInfo;
   std::map<string,double> peripheryWeight;
   std::map<string,double> centerWeight;
+  double beadRadius;
   
   bool hasPeriphery = false;
   bool hasEdges = false;
   bool hasColor = false;
+  bool hasBeadRadius = false;
   
   while(getline(myfile,line)) {    
     if(line.substr(0,3) == "###") {
       header = util::split(line.substr(3),'\t');
       hasPeriphery = find(header.begin(), header.end(), "periphery") != header.end();
       hasEdges = find(header.begin(), header.end(), "edges") != header.end();
-      hasColor = find(header.begin(), header.end(), "color") != header.end();      
+      hasColor = find(header.begin(), header.end(), "color") != header.end();
+      hasBeadRadius = find(header.begin(), header.end(), "radius") != header.end();
     }
     if(line.substr(0,1) == "#") { // Ignore comments
       continue;
@@ -464,15 +478,23 @@ void Model::readGtrack(string filename, bool scaleBeadSizes/*=false*/, double nu
       assert(this->hasNucleus);
     }
 
+    
     vector<string> dataLine = util::split(line,'\t');
     map<string, string> fieldParser = util::makeMap(header, dataLine);
-
+    
+    
     if (chromosomes.find(fieldParser["seqid"]) == chromosomes.end() ) {
       Chromosome chr(fieldParser["seqid"]);
       chromosomes[fieldParser["seqid"]] = chr;
     }
 
-    Bead myBead(boost::lexical_cast<int>(fieldParser["start"]), boost::lexical_cast<int>(fieldParser["end"]), boost::lexical_cast<double>(fieldParser["radius"]), fieldParser["id"]);
+    beadRadius = 0.5; // Default bead radius size
+    if(hasBeadRadius) {
+      beadRadius = boost::lexical_cast<double>(fieldParser["radius"]);
+    }
+
+    
+    Bead myBead(boost::lexical_cast<int>(fieldParser["start"]), boost::lexical_cast<int>(fieldParser["end"]), beadRadius, fieldParser["id"]);
     myBead.setCoordinates(0,0,0); // Coordinates are not defined at this point, set all to zero.
     
     beadId2chr[fieldParser["id"]] = fieldParser["seqid"];
@@ -491,6 +513,7 @@ void Model::readGtrack(string filename, bool scaleBeadSizes/*=false*/, double nu
       if (fieldParser["periphery"] == "0") {
 	centerIds.push_back(fieldParser["id"]);
       }
+      
       if (fieldParser["periphery"].find(",") != std::string::npos) { // has periphery-weights
 	if( util::splitDbl(fieldParser["periphery"], ',')[0] == 1) {
 	  peripheryIds.push_back(fieldParser["id"]);
@@ -501,7 +524,7 @@ void Model::readGtrack(string filename, bool scaleBeadSizes/*=false*/, double nu
 	  centerWeight[fieldParser["id"]] = util::splitDbl(fieldParser["periphery"], ',')[1];
 	}
 	else {
-	  assert(false); // 'periphery' can be either 0 or 1.
+	  assert(false); // 'periphery' can be either 0 or 1, when a weight is given.
 	}	  
 	
       }
@@ -535,22 +558,30 @@ void Model::readGtrack(string filename, bool scaleBeadSizes/*=false*/, double nu
           }
           else{ // split edge information
             vector<double> edgeInfoDetail = util::splitDbl(edgeInfoAll,',');
+	    vector<string> edgeInfoDetailString = util::split(edgeInfoAll,',');
 	    if(edgeInfoDetail.size() == 3) { // link information with 0) Distance, 1) Weight and 2) Boundary info
 	      assert(edgeInfoDetail[1] > 0);
-	      assert(edgeInfoDetail[2] == 0 or edgeInfoDetail[2]==1);
+	      assert(edgeInfoDetailString[2] == "0" or edgeInfoDetailString[2] == "1" or edgeInfoDetailString[2] == ".");
 	      // edgeInfoDetail contains [0]=distance (double), [1]=weight (<0,1]), [2]=boundary (0/1). 
 	      // If boundary is 1, define distance as the minimum required between the two "interacting" beads. (penalty for smaller distance than this defined distance)
-	      // If boundary is 0, use distance as the desired distance between the beads (penalty for larger distance than this defined distance)
-	      if(edgeInfoDetail[2]==0){
+	      // If boundary is 0, use distance as the maximum desired distance between the beads (penalty for larger distance than this defined distance)
+	      // If boundary is . (missing), use the given distance as the desired distance (penalty for larger and smaller distances)
+
+	      if(edgeInfoDetailString[2]=="0"){ // UpperBound
+		interactionUpperDistanceIds.push_back(idPair1);
+	      }
+	      else if(edgeInfoDetailString[2]=="1") { // LowerBound
+		interactionLowerDistanceIds.push_back(idPair1);
+	      }
+	      else if(edgeInfoDetailString[2]==".") { // Unbounded
 		interactionDistanceIds.push_back(idPair1);
 	      }
-	      else{
-		nonInteractionDistanceIds.push_back(idPair1);
-	      } 
+	      else {
+		assert(false);
+	      }
                      
 	      distInfo[idPair1] = edgeInfoDetail[0];
 	      weightInfo[idPair1] = edgeInfoDetail[1];
-	      boundaryInfo[idPair1] = edgeInfoDetail[2];
 	    }
 	    else if(edgeInfoDetail.size() == 1) { // Only one number, gives the weight on that link.
 	      assert(edgeInfoDetail[0] > 0);
@@ -604,29 +635,35 @@ void Model::readGtrack(string filename, bool scaleBeadSizes/*=false*/, double nu
     }
   }
 
-  // Adding Distance Interactions based on distances:
-  for(vector<pair<string,string> >::iterator it = interactionDistanceIds.begin();  it != interactionDistanceIds.end(); it++) {
-    
-    // Obtaining distance and weight information
-    std::map<idPair,double>::iterator itDist = distInfo.find(*it);
+  std::map<idPair,double>::iterator itDist;
+  std::map<idPair,double>::iterator itWeight;
 
-   std::map<idPair,double>::iterator itWeight = weightInfo.find(*it);
-   
-    
-    this->addInteractionDistanceConstraint(it->first, it->second, itDist->second, itWeight->second, INTERACTION_DIST);
+  // Adding non-bounded distances:
+  for(vector<pair<string,string> >::iterator it = interactionDistanceIds.begin();  it != interactionDistanceIds.end(); it++) {    
+    itDist = distInfo.find(*it);
+    itWeight = weightInfo.find(*it);
+       
+    this->addInteractionDistanceConstraint(it->first, it->second, itDist->second, itWeight->second);
   }
   
     
-  // Adding Forced Distance to NON interacting beads:
-  for(vector<pair<string,string> >::iterator it = nonInteractionDistanceIds.begin();  it != nonInteractionDistanceIds.end(); it++) {
-    
-    // Obtaining distance and weight information
-    std::map<idPair,double>::iterator itDist = distInfo.find(*it);
-    std::map<idPair,double>::iterator itWeight = weightInfo.find(*it);
+  // Adding Lower-bound distances:
+  for(vector<pair<string,string> >::iterator it = interactionLowerDistanceIds.begin();  it != interactionLowerDistanceIds.end(); it++) {    
+    itDist = distInfo.find(*it);
+    itWeight = weightInfo.find(*it);
    
-    this->addNonInteractionDistanceConstraint(it->first, it->second, itDist->second, itWeight->second, NON_INTERACTION_DIST);
+    this->addInteractionLowerDistanceConstraint(it->first, it->second, itDist->second, itWeight->second);
   }
 
+  // Adding Upper-bound distances:
+  for(vector<pair<string,string> >::iterator it = interactionUpperDistanceIds.begin();  it != interactionUpperDistanceIds.end(); it++) {    
+    itDist = distInfo.find(*it);
+    itWeight = weightInfo.find(*it);
+   
+    this->addInteractionUpperDistanceConstraint(it->first, it->second, itDist->second, itWeight->second);
+  }
+
+  
   // Adding periphery:
   double w;
   for(vector<string>::iterator it = peripheryIds.begin();  it != peripheryIds.end(); it++) {
@@ -655,8 +692,9 @@ void Model::readGtrack(string filename, bool scaleBeadSizes/*=false*/, double nu
   cerr << "# beads: " << N << endl;
   cerr << "# interactions: " << interactionIds.size() << endl;
   cerr << "# interactions with given weight: " << weightInfo.size() << endl;
-  cerr << "# interactions with given distance: " << interactionDistanceIds.size() << endl;
-  cerr << "# non-interactions with given minimum distance: " << nonInteractionDistanceIds.size() << endl;
+  cerr << "# non-bounded interactions with given distance: " << interactionDistanceIds.size() << endl;
+  cerr << "# upper-bounded interactions with given distance: " << interactionUpperDistanceIds.size() << endl;
+  cerr << "# lower-bounded interactions with given distance: " << interactionLowerDistanceIds.size() << endl;
   cerr << "# periphery beads: " << peripheryIds.size() << endl;
   cerr << "# periphery beads (with weights): " << peripheryWeight.size() << endl;
   cerr << "# center beads: " << centerIds.size() << endl;

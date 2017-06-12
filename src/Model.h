@@ -37,8 +37,9 @@ class Model {
   double getPartialLossScore();  
   void addConstraint(std::string beadId1, std::string beadId2, double targetDistance, ConstraintType constType = REGULAR, double springConstant=1, double lowerBound=0, double upperBound=std::numeric_limits<double>::infinity());
   void addInteractionConstraint(std::string beadId1, std::string beadId2, double springConstant=1, ConstraintType interactionType = INTERACTION);
-  void addInteractionDistanceConstraint(std::string beadId1, std::string beadId2, double beadPairDesiredDistance, double springConstant=1, ConstraintType interactionType=INTERACTION_DIST);
-  void addNonInteractionDistanceConstraint(std::string beadId1, std::string beadId2, double beadPairRequiredAboveDistance, double springConstant=1, ConstraintType interactionType=INTERACTION_DIST);
+  void addInteractionDistanceConstraint(std::string beadId1, std::string beadId2, double beadPairDesiredDistance, double springConstant=1);
+  void addInteractionLowerDistanceConstraint(std::string beadId1, std::string beadId2, double beadPairDesiredDistance, double springConstant=1);
+  void addInteractionUpperDistanceConstraint(std::string beadId1, std::string beadId2, double beadPairDesiredDistance, double springConstant=1);
   void addBoundaryConstraint(std::string, double, double springConstant=1.0);
   void addNucleusConstraint(std::string, double springConstant=1.0);
   void addCenterConstraint(std::string, double springConstant=1.0);

@@ -36,7 +36,6 @@ string Constraint::getConstraintType(){
     case INTERACTION_INTRA: return "INTERACTION_INTRA";
     case INTERACTION_INTER: return "INTERACTION_INTER";
     case INTERACTION_DIST: return "INTERACTION_DIST";
-    case NON_INTERACTION_DIST: return "NON_INTERACTION_DIST";
     case REGULAR: return "REGULAR";
     case C_T_COUNT: return "C_T_COUNT";
    }
