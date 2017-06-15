@@ -560,9 +560,8 @@ void Model::readGtrack(string filename, bool scaleBeadSizes/*=false*/, double nu
             vector<double> edgeInfoDetail = util::splitDbl(edgeInfoAll,',');
 	    vector<string> edgeInfoDetailString = util::split(edgeInfoAll,',');
 	    if(edgeInfoDetail.size() == 3) { // link information with 0) Distance, 1) Weight and 2) Boundary info
-	      assert(edgeInfoDetail[1] > 0);
 	      assert(edgeInfoDetailString[2] == "0" or edgeInfoDetailString[2] == "1" or edgeInfoDetailString[2] == ".");
-	      // edgeInfoDetail contains [0]=distance (double), [1]=weight (<0,1]), [2]=boundary (0/1). 
+	      // edgeInfoDetail contains [0]=weight (>0), [1]=distance (>0]), [2]=boundary (0/1). 
 	      // If boundary is 1, define distance as the minimum required between the two "interacting" beads. (penalty for smaller distance than this defined distance)
 	      // If boundary is 0, use distance as the maximum desired distance between the beads (penalty for larger distance than this defined distance)
 	      // If boundary is . (missing), use the given distance as the desired distance (penalty for larger and smaller distances)
@@ -579,9 +578,10 @@ void Model::readGtrack(string filename, bool scaleBeadSizes/*=false*/, double nu
 	      else {
 		assert(false);
 	      }
-                     
-	      distInfo[idPair1] = edgeInfoDetail[0];
-	      weightInfo[idPair1] = edgeInfoDetail[1];
+	      assert(edgeInfoDetail[0] >= 0);
+	      assert(edgeInfoDetail[1] >= 0);
+	      weightInfo[idPair1] = edgeInfoDetail[0];
+	      distInfo[idPair1] = edgeInfoDetail[1];
 	    }
 	    else if(edgeInfoDetail.size() == 1) { // Only one number, gives the weight on that link.
 	      assert(edgeInfoDetail[0] > 0);
