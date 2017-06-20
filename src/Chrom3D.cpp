@@ -43,7 +43,7 @@ Args parseArguments(int argc, char** argv) {
     try {  
     TCLAP::CmdLine cmd("Chrom3D is a 3D genome modeling platform designed to incorporate a versatile set of constraints. For example, Chrom3D can simultaneously incorporate chromosomal interaction constraints (such as Hi-C) and constraints from chromosome association with the nuclear periphery." , ' ', VERSION);
 
-    TCLAP::UnlabeledValueArg<string> nolabel( "filename", "Input file In gtrack format", true, "/dev/null", "Gtrack file"  );
+    TCLAP::UnlabeledValueArg<string> nolabel( "filename", "Model Setup File in GTrack format", true, "/dev/null", "Gtrack file"  );
     cmd.add( nolabel );	
 
     ////////
@@ -52,7 +52,7 @@ Args parseArguments(int argc, char** argv) {
     assert(f.good());
     */
     
-    TCLAP::ValueArg<string> outfileArg("o","outstruct","Filename of the final, optimized structure in Chimera (CMM) format. If not specified, stdout will be used",false,"/dev/null","filename");
+    TCLAP::ValueArg<string> outfileArg("o","outstruct","Filename of the final, optimized structure in XML format suitable for visualization in Chimera (CMM format). If not specified, stdout will be used",false,"/dev/null","filename");
 
     TCLAP::ValueArg<uint> seedArg("s","seed","Seed used for randomization (default: 1234)",false,1234,"unsigned integer");
 
@@ -197,8 +197,8 @@ int main(int argc, char** argv) {
 
    
   if(args.verbose != 0) {
-    cerr << "0 " << model.getLossScore(INTERACTION_INTRA) << " " << model.getLossScore(INTERACTION_INTER) << " " << model.getLossScore(PERIPHERY) << " " << model.getLossScore(CENTER) << " " << model.getLossScore(BOUNDARY) << " " << model.getLossScore(NUCLEUS) << " " << model.getLossScore(INTERACTION_DIST) << " " << model.getLossScore() << endl;
-
+    //cerr << "0 " << model.getLossScore(INTERACTION_INTRA) << " " << model.getLossScore(INTERACTION_INTER) << " " << model.getLossScore(PERIPHERY) << " " << model.getLossScore(CENTER) << " " << model.getLossScore(BOUNDARY) << " " << model.getLossScore(NUCLEUS) << " " << model.getLossScore(INTERACTION_DIST) << " " << model.getLossScore() << endl;
+cerr << "0 " << model.getLossScore() << endl;
   }
   
   
@@ -210,7 +210,8 @@ int main(int argc, char** argv) {
       if(args.printStructures) {
 	model.writeCMM(args.modelName + "_iter_" + SSTR(i) + ".cmm");
       }
-      cerr << i << " " << model.getLossScore(INTERACTION_INTRA) << " " << model.getLossScore(INTERACTION_INTER) << " " << model.getLossScore(PERIPHERY) << " " << model.getLossScore(CENTER) << " " << model.getLossScore(INTERACTION_DIST) << " " << model.getLossScore() << endl;
+      //cerr << i << " " << model.getLossScore(INTERACTION_INTRA) << " " << model.getLossScore(INTERACTION_INTER) << " " << model.getLossScore(PERIPHERY) << " " << model.getLossScore(CENTER) << " " << model.getLossScore(INTERACTION_DIST) << " " << model.getLossScore() << endl;
+      cerr << i << " " << model.getLossScore() << endl;
     }
   }
 
