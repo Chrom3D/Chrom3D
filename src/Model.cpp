@@ -689,6 +689,7 @@ void Model::readGtrack(string filename, bool scaleBeadSizes/*=false*/, double nu
   this->resetAllChromosomes(1000); //, true);
 
   uint N=this->getNumberOfBeads();
+  cerr << "# chromosomes: " << chromosomes.size() << endl;
   cerr << "# beads: " << N << endl;
   cerr << "# interactions: " << interactionIds.size() << endl;
   cerr << "# interactions with given weight: " << weightInfo.size() << endl;
@@ -753,7 +754,7 @@ void Model::resetAllChromosomes(uint maxAttempts /*=1000*/) { //, bool updateCla
         mov.mat = mat;
         mov.validate();
         if (not isClashing(mov)) {
-	  cerr << "# " << chriter->getName() << " done!" << endl;
+	  //cerr << "# " << chriter->getName() << " done!" << endl;
 	  Move old = this->accept(mov); //, updateClash);
 	  break;
         }
