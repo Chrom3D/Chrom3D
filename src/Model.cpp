@@ -691,11 +691,11 @@ void Model::readGtrack(string filename, bool scaleBeadSizes/*=false*/, double nu
   uint N=this->getNumberOfBeads();
   cerr << "# chromosomes: " << chromosomes.size() << endl;
   cerr << "# beads: " << N << endl;
-  cerr << "# interactions: " << interactionIds.size() << endl;
-  cerr << "# interactions with given weight: " << weightInfo.size() << endl;
-  cerr << "# non-bounded interactions with given distance: " << interactionDistanceIds.size() << endl;
-  cerr << "# upper-bounded interactions with given distance: " << interactionUpperDistanceIds.size() << endl;
-  cerr << "# lower-bounded interactions with given distance: " << interactionLowerDistanceIds.size() << endl;
+  cerr << "# interactions: " << interactionIds.size() / 2 << endl; // Divide by 2, since each interact. is specified twice.
+  cerr << "# interactions with given weight: " << weightInfo.size()  / 2 << endl;
+  cerr << "# non-bounded interactions with given distance: " << interactionDistanceIds.size()  / 2 << endl;
+  cerr << "# upper-bounded interactions with given distance: " << interactionUpperDistanceIds.size()  / 2 << endl;
+  cerr << "# lower-bounded interactions with given distance: " << interactionLowerDistanceIds.size()  / 2 << endl;
   cerr << "# periphery beads: " << peripheryIds.size() << endl;
   cerr << "# periphery beads (with weights): " << peripheryWeight.size() << endl;
   cerr << "# center beads: " << centerIds.size() << endl;
