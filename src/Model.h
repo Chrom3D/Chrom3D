@@ -26,6 +26,8 @@
 
 #include <sstream>
 
+typedef std::pair<std::string, std::string> idPair;
+
 class Model {
  public:
   Model(std::string, uint seed=1234);
@@ -94,7 +96,8 @@ class Model {
   void addConstraint(Constraint);
   std::vector<double> calculateScorePerConstraint(Chromosome&, uint, uint);
   Bead centerBead;
-
+  bool interactionSpecifiedSymmetricly(std::vector<std::pair<std::string,std::string> > &interactionVector);
+  bool interactionWeightsSpecifiedSymmetricly(std::map<idPair,double> &interactionWithWeight);
 
 };
 uint weightedSamplePos(std::vector<double>, ENG&);

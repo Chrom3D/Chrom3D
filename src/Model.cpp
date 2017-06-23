@@ -5,6 +5,7 @@
 
 using namespace std;
 
+
 Model::Model(string modelName, uint seed /*=1234*/) {
   name=modelName;
   randEngine.seed(seed);
@@ -684,8 +685,21 @@ void Model::readGtrack(string filename, bool scaleBeadSizes/*=false*/, double nu
     this->addCenterConstraint(*it,w);
   }
 
+  // Assert all interactions specified twice:
 
+  assert(interactionSpecifiedSymmetricly(interactionIds));
+  assert(interactionSpecifiedSymmetricly(interactionDistanceIds));
+  assert(interactionSpecifiedSymmetricly(interactionLowerDistanceIds));
+  assert(interactionSpecifiedSymmetricly(interactionUpperDistanceIds));
+
+  // Assert all distances and weights specified (equally) twice:
+  assert(interactionWeightsSpecifiedSymmetricly(distInfo));
+  assert(interactionWeightsSpecifiedSymmetricly(weightInfo));
+
+  
+  
   // Initialize structures randomly:
+  
   this->resetAllChromosomes(1000); //, true);
 
   uint N=this->getNumberOfBeads();
@@ -860,4 +874,44 @@ double Model::getNuclearOccupancy() {
   assert(this->hasNucleus);
   double nuclearVolume = (4.0/3.0) * util::PI * pow(this->nucleusRadius,3);
   return this->getTotalBeadVolume() / nuclearVolume;
+}
+
+
+bool Model::interactionSpecifiedSymmetricly(std::vector<std::pair<std::string,std::string> > &interactionVector) {
+  std::vector<std::pair<std::string,std::string> > tmpVec;
+  string left,right;
+  for(std::vector<std::pair<std::string,std::string> >::iterator it = interactionVector.begin(); it != interactionVector.end(); it++) {
+    if(it->first < it->second) {
+      tmpVec.push_back(*it);     
+    }
+    else {
+      left = it->first;
+      right = it->second;
+      tmpVec.push_back(make_pair(right,left));
+    }
+  }
+  int num_interactions;
+  for(std::vector<std::pair<std::string,std::string> >::iterator it = tmpVec.begin(); it != tmpVec.end(); it++) {    
+      num_interactions = std::count(tmpVec.begin(), tmpVec.end(), *it);
+      if (num_interactions != 2) {
+	return false;
+      }
+  }
+  return true;
+}
+
+bool Model::interactionWeightsSpecifiedSymmetricly(std::map<idPair,double> &interactionWithWeight) {
+  idPair newPair;
+  for(std::map<idPair,double>::iterator it = interactionWithWeight.begin(); it != interactionWithWeight.end(); it++) {
+    newPair = make_pair(it->first.second,it->first.first);
+    if(interactionWithWeight.find(newPair) == interactionWithWeight.end()) {
+      return false;
+    }
+    else {
+      if(abs(interactionWithWeight[newPair] - it->second) > 0.000001) {
+	return false;
+      }
+    }
+  }
+  return true;
 }

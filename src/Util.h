@@ -61,7 +61,6 @@ namespace util {
   std::vector<double> &splitDbl(const std::string&, char, std::vector<double>&);
   std::vector<double> splitDbl(const std::string&, char);
   std::map<std::string, std::string> makeMap(std::vector<std::string>, std::vector<std::string>);
-
   class MoveException: public std::exception {
   public:
     MoveException();
