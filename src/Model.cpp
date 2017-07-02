@@ -1,6 +1,8 @@
 #include "Model.h"
+#include "Util.h"
 #include <assert.h>
 #include <typeinfo>
+#include <stdexcept>
 
 
 using namespace std;
@@ -435,7 +437,8 @@ void Model::writeCMM(string fileName) {
 void Model::readGtrack(string filename, bool scaleBeadSizes/*=false*/, double nuclearOccupancy /*=0.2*/) {
   string line;
   ifstream myfile(filename.c_str());
-  assert(myfile.is_open());
+  uint line_counter = 0;
+  if(!myfile.is_open()) throw std::runtime_error("Gtrack file not found or does not exist");
 
   typedef std::pair<std::string, std::string> idPair;
   
@@ -464,6 +467,7 @@ void Model::readGtrack(string filename, bool scaleBeadSizes/*=false*/, double nu
   bool hasBeadRadius = false;
   
   while(getline(myfile,line)) {    
+    line_counter++;
     if(line.substr(0,3) == "###") {
       header = util::split(line.substr(3),'\t');
       hasPeriphery = find(header.begin(), header.end(), "periphery") != header.end();
@@ -516,16 +520,18 @@ void Model::readGtrack(string filename, bool scaleBeadSizes/*=false*/, double nu
       }
       
       if (fieldParser["periphery"].find(",") != std::string::npos) { // has periphery-weights
-	if( util::splitDbl(fieldParser["periphery"], ',')[0] == 1) {
+	if( util::split(fieldParser["periphery"], ',')[0] == "1") {
 	  peripheryIds.push_back(fieldParser["id"]);
-	  peripheryWeight[fieldParser["id"]] = util::splitDbl(fieldParser["periphery"], ',')[1];
+	  peripheryWeight[fieldParser["id"]] = boost::lexical_cast<double>(util::split(fieldParser["periphery"], ',')[1]);
 	}
-	else if( util::splitDbl(fieldParser["periphery"], ',')[0] == 0) {
+	else if( util::split(fieldParser["periphery"], ',')[0] == "0") {
 	  centerIds.push_back(fieldParser["id"]);
-	  centerWeight[fieldParser["id"]] = util::splitDbl(fieldParser["periphery"], ',')[1];
+	  centerWeight[fieldParser["id"]] = boost::lexical_cast<double>(util::split(fieldParser["periphery"], ',')[1]);
 	}
 	else {
-	  assert(false); // 'periphery' can be either 0 or 1, when a weight is given.
+	  //assert(false); // 'periphery' can be either 0 or 1, when a weight is given.
+            std::string error_line = util::errorLine(line_counter,filename);
+            throw std::logic_error(error_line + "Periphery can be either 0 or 1, when a weight is given.");
 	}	  
 	
       }
@@ -539,7 +545,12 @@ void Model::readGtrack(string filename, bool scaleBeadSizes/*=false*/, double nu
         b2id = edgeList[i];
         if(b2id.find("=") == std::string::npos){ // if edge information does not contain edge weights 
           idPair1 = make_pair(fieldParser["id"], b2id);
-          assert(idPair1.first != idPair1.second);	
+          //assert(idPair1.first != idPair1.second);	
+          if(idPair1.first == idPair1.second)
+          {
+            std::string error_line = util::errorLine(line_counter,filename);
+            throw std::logic_error(error_line + "Same beadId found in the edge column, please check the edge column of the above line");
+          }
  
           if(find(interactionIds.begin(), interactionIds.end(), idPair1) == interactionIds.end())  {
             interactionIds.push_back(idPair1); // idPair2 should not be added here, since addConstraint will add both pairs automatically
@@ -549,7 +560,12 @@ void Model::readGtrack(string filename, bool scaleBeadSizes/*=false*/, double nu
           b2id = edgeList[i].substr(0,edgeList[i].find("="));
           string edgeInfoAll =  edgeList[i].substr(edgeList[i].find("=")+1);
           idPair1 = make_pair(fieldParser["id"], b2id);
-          assert(idPair1.first != idPair1.second);	
+          //assert(idPair1.first != idPair1.second);	
+          if(idPair1.first == idPair1.second)
+          {
+            std::string error_line = util::errorLine(line_counter,filename);
+            throw std::logic_error(error_line + "Same beadId found in the edge column, please check the edge column of the above line");
+          }
          
           if(edgeInfoAll.find(".") == 0){//No weighting on edges: treat like ordinary interaction
             
@@ -561,7 +577,12 @@ void Model::readGtrack(string filename, bool scaleBeadSizes/*=false*/, double nu
             vector<double> edgeInfoDetail = util::splitDbl(edgeInfoAll,',');
 	    vector<string> edgeInfoDetailString = util::split(edgeInfoAll,',');
 	    if(edgeInfoDetail.size() == 3) { // link information with 0) Distance, 1) Weight and 2) Boundary info
-	      assert(edgeInfoDetailString[2] == "0" or edgeInfoDetailString[2] == "1" or edgeInfoDetailString[2] == ".");
+	      //assert(edgeInfoDetailString[2] == "0" or edgeInfoDetailString[2] == "1" or edgeInfoDetailString[2] == ".");
+              if(edgeInfoDetailString[2] != "0" and edgeInfoDetailString[2] != "1" and edgeInfoDetailString[2] != ".")
+              {
+                std::string error_line = util::errorLine(line_counter,filename);
+                throw std::logic_error(error_line + "Boundary information value can be 0, 1 or .");
+              } 
 	      // edgeInfoDetail contains [0]=weight (>0), [1]=distance (>0]), [2]=boundary (0/1). 
 	      // If boundary is 1, define distance as the minimum required between the two "interacting" beads. (penalty for smaller distance than this defined distance)
 	      // If boundary is 0, use distance as the maximum desired distance between the beads (penalty for larger distance than this defined distance)
@@ -579,18 +600,35 @@ void Model::readGtrack(string filename, bool scaleBeadSizes/*=false*/, double nu
 	      else {
 		assert(false);
 	      }
-	      assert(edgeInfoDetail[0] >= 0);
-	      assert(edgeInfoDetail[1] >= 0);
+	      //assert(edgeInfoDetail[0] >= 0);
+              if(edgeInfoDetail[0] < 0)
+              {
+                std::string error_line = util::errorLine(line_counter,filename);
+                throw std::logic_error(error_line + "Weight should be above 0");
+              }
+	      //assert(edgeInfoDetail[1] >= 0);
+              if(edgeInfoDetail[1] < 0)
+              {
+                std::string error_line = util::errorLine(line_counter,filename);
+                throw std::logic_error(error_line + "Distance should be above 0");
+              }
 	      weightInfo[idPair1] = edgeInfoDetail[0];
 	      distInfo[idPair1] = edgeInfoDetail[1];
 	    }
 	    else if(edgeInfoDetail.size() == 1) { // Only one number, gives the weight on that link.
-	      assert(edgeInfoDetail[0] > 0);
+	      //assert(edgeInfoDetail[0] > 0);
+              if(edgeInfoDetail[0] < 0)
+              {
+                std::string error_line = util::errorLine(line_counter,filename);
+                throw std::logic_error(error_line + "Weight should be above 0");
+              }
 	      interactionIds.push_back(idPair1);
 	      weightInfo[idPair1] = edgeInfoDetail[0];	      
 	    }
 	    else {
-	      assert(false);
+	      //assert(false);
+              std::string error_line = util::errorLine(line_counter,filename);
+              throw std::logic_error(error_line + "Either only weight or all the information should be specified for a linked bead");
 	    }
 	    
           }
@@ -687,14 +725,36 @@ void Model::readGtrack(string filename, bool scaleBeadSizes/*=false*/, double nu
 
   // Assert all interactions specified twice:
 
-  assert(interactionSpecifiedSymmetricly(interactionIds));
-  assert(interactionSpecifiedSymmetricly(interactionDistanceIds));
-  assert(interactionSpecifiedSymmetricly(interactionLowerDistanceIds));
-  assert(interactionSpecifiedSymmetricly(interactionUpperDistanceIds));
+  //assert(interactionSpecifiedSymmetricly(interactionIds));
+  if(!interactionSpecifiedSymmetricly(interactionIds))
+  {
+    throw std::runtime_error("Advanced option: Edge column is not symmetrical for one or more beads. Interacting beads have to be specified twice in the corresponding edge column with the same information.");
+  }
+  //assert(interactionSpecifiedSymmetricly(interactionDistanceIds));
+  if(!interactionSpecifiedSymmetricly(interactionDistanceIds))
+  {
+    throw std::runtime_error("Advanced option: Edge column is not symmetrical for one or more beads. Interacting beads have to be specified twice in the corresponding edge column with the same information.");
+  }
+  //assert(interactionSpecifiedSymmetricly(interactionLowerDistanceIds));
+  if(!interactionSpecifiedSymmetricly(interactionLowerDistanceIds))
+  {
+    throw std::runtime_error("Advanced option: Edge column is not symmetrical for one or more beads. Interacting beads have to be specified twice in the corresponding edge column with the same boundary information [0,1,.].");
+  }
+
+  if(!interactionSpecifiedSymmetricly(interactionUpperDistanceIds))
+  {
+    throw std::runtime_error("Advanced option: Edge column is not symmetrical for one or more beads. Interacting beads have to be specified twice in the corresponding edge column with the same boundary information [0,1,.].");
+  }
 
   // Assert all distances and weights specified (equally) twice:
-  assert(interactionWeightsSpecifiedSymmetricly(distInfo));
-  assert(interactionWeightsSpecifiedSymmetricly(weightInfo));
+  if(!interactionWeightsSpecifiedSymmetricly(distInfo))
+  {
+    throw std::runtime_error("Advanced option: Optimal distance specified is not the same for interacting beads. Please verify the edge column.");
+  }
+  if(!interactionWeightsSpecifiedSymmetricly(weightInfo))
+  {
+    throw std::runtime_error("Advanced option: Weight specified is not the same for interacting beads. Please verify the edge column.");
+  }
 
   
   

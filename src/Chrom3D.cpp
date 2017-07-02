@@ -10,6 +10,7 @@
 #include <vector>
 #include <math.h>
 #include <limits>
+#include <stdexcept>
 
 #include <sstream>
 
@@ -128,10 +129,9 @@ Args parseArguments(int argc, char** argv) {
 
     args.printStructures = printfilesSwitch.getValue();
       
-    assert(args.coolrate >= 0.0 and args.coolrate < 1.0);
-    assert(args.occupancy >= 0.0 and args.occupancy < 1.0);
-    
-    assert(args.verbose >= 0 and args.verbose <= args.nIter);
+    if(args.coolrate < 0.0 or args.coolrate > 1.0) throw std::range_error("Error: Cooling rate (-c) should be between 0 and 1");
+    if(args.occupancy < 0.0 or args.occupancy > 1.0) throw std::range_error("Error: Occupancy (-y) should be between 0 and 1");
+    if(args.verbose < 0 or args.verbose > args.nIter) throw std::range_error("Error: Verbose (-l) should be between 0 and number of iterations given (-n)");
     
   } catch (TCLAP::ArgException &e) { 
     std::cerr << "error: " << e.error() << " for arg " << e.argId() << std::endl; 

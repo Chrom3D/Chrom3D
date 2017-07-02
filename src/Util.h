@@ -4,6 +4,8 @@
 #include <stdint.h>
 #include <numeric>
 #include <vector>
+#include <string>
+#include <sstream>
 
 //#include "Bead.h"
 //#include "Chromosome.h"
@@ -17,7 +19,7 @@
 #include <boost/numeric/ublas/matrix_proxy.hpp>
 #include <boost/container/static_vector.hpp>
 
-
+#include <boost/lexical_cast.hpp>
 
 #include <boost/random.hpp>
 #include <boost/random/uniform_int_distribution.hpp>
@@ -61,6 +63,8 @@ namespace util {
   std::vector<double> &splitDbl(const std::string&, char, std::vector<double>&);
   std::vector<double> splitDbl(const std::string&, char);
   std::map<std::string, std::string> makeMap(std::vector<std::string>, std::vector<std::string>);
+  std::string errorLine(uint line_counter, std::string filename);
+
   class MoveException: public std::exception {
   public:
     MoveException();

@@ -171,7 +171,11 @@ std::vector<double> splitDbl(const std::string &s, char delim) {
 }
 
 std::map<std::string, std::string> makeMap(std::vector<std::string> vec1, std::vector<std::string> vec2) { // Make a template function here!
-  assert(vec1.size() == vec2.size());
+  //assert(vec1.size() == vec2.size());
+  if(vec1.size() != vec2.size())
+  {
+    throw std::runtime_error("Header is missing in the GTrack file");
+  }
   std::map<string,string> res;
   for(uint i=0; i != vec1.size(); i++) {
     res[vec1[i]] = vec2[i];
@@ -179,6 +183,13 @@ std::map<std::string, std::string> makeMap(std::vector<std::string> vec1, std::v
   return res;
 }
 
+std::string errorLine(uint line_counter, std::string filename)
+{
+  std::ostringstream oss;
+  oss << "Error in the line #" << boost::lexical_cast<std::string>(line_counter) << " of the GTrack file " << filename << endl;
+  std::string error_line = oss.str();
+  return error_line;	
+}
   
 
   
