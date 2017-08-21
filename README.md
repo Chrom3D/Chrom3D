@@ -97,6 +97,8 @@ The output should be as following:
 
 ![toy-global-example.cmm](http://folk.uio.no/tmali/git_ups/test_image2.jpg)
 
+Note: The output structure may differ to a small degree due to different versions of random number generator
+
 ## Parameter information
 
 ### The random moves
