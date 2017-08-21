@@ -47,7 +47,7 @@ The resulting Chrom3D binary should then be created for you in this folder.
 Errors?  Please report them under [Issues](https://github.com/CollasLab/Chrom3D/issues)
 
 
-## Test the installation by running a test simulation
+## Test the installation
 To make sure that Chrom3D is working properly on your machine:
 
 `./Chrom3D --version`
