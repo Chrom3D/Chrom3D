@@ -48,7 +48,7 @@ Errors?  Please report them under [Issues](https://github.com/CollasLab/Chrom3D/
 
 
 ## Test the installation by running a test simulation
-To make sure that Chrom3D is working properly on your machine, run your first simulation using following command:
+To make sure that Chrom3D is working properly on your machine:
 
 `./Chrom3D --version`
 
