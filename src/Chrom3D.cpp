@@ -131,7 +131,7 @@ Args parseArguments(int argc, char** argv) {
       
     if(args.coolrate < 0.0 or args.coolrate > 1.0) throw std::range_error("Error: Cooling rate (-c) should be between 0 and 1");
     if(args.occupancy < 0.0 or args.occupancy > 1.0) throw std::range_error("Error: Occupancy (-y) should be between 0 and 1");
-    if(args.verbose < 0 or args.verbose > args.nIter) throw std::range_error("Error: Verbose (-l) should be between 0 and number of iterations given (-n)");
+    if(args.verbose > args.nIter) throw std::range_error("Error: Verbose (-l) should be between 0 and number of iterations given (-n)");
     
   } catch (TCLAP::ArgException &e) { 
     std::cerr << "error: " << e.error() << " for arg " << e.argId() << std::endl; 
