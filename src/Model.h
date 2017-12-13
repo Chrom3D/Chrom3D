@@ -16,6 +16,8 @@
 #include <iostream>
 #include <fstream>
 #include <numeric>
+#include <iomanip>
+#include <string>
 
 #include <boost/unordered_map.hpp>
 #include <math.h>
@@ -54,6 +56,7 @@ class Model {
 
   Move accept(Move& mov); 
   void writeCMM(std::string);
+  void writePDB(std::string);
   std::string getCMM();
   void readGtrack(std::string, bool scaleBeadSizes=false, double nuclearOccupancy=0.2);
   void setNucleusRadius(double);

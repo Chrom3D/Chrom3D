@@ -14,6 +14,8 @@
 
 #include <sstream>
 
+#include <boost/filesystem.hpp>
+
 #include "../src/tclap-1.2.1/include/tclap/CmdLine.h"
 
 #define SSTR( x ) dynamic_cast< std::ostringstream & >( \
@@ -36,6 +38,7 @@ struct Args {
   bool centerConstraint;
   bool nucleusConstraint;
   bool printStructures;
+  bool pdbStructures;
 };
 
 Args parseArguments(int argc, char** argv) {
@@ -86,6 +89,8 @@ Args parseArguments(int argc, char** argv) {
     //TCLAP::SwitchArg centerSwitch("","center","Add constraints such that all beads are pushed towards the center of the nucleus", false);
     TCLAP::SwitchArg nucleusSwitch("","nucleus","Add constraints such that all beads are pushed towards the inside of the nucleus", false);
 
+    TCLAP::SwitchArg pdbSwitch("","pdb","Create PDB files in addition to the CMM in a separate folder (modelname will be used to create the folder)", false);
+
     TCLAP::SwitchArg printfilesSwitch("","printmodels","Print intermediate models in CMM format (at intervals specified by -l/--log) with names consisting of the model name (specified by -m/--modelname) and the iteration number.", false);
 
 
@@ -94,6 +99,7 @@ Args parseArguments(int argc, char** argv) {
     cmd.add( excludeArg );
     //cmd.add( centerSwitch );
     cmd.add( nucleusSwitch );
+    cmd.add( pdbSwitch );
 
     cmd.add( verboseArg );
     cmd.add( seedArg );
@@ -128,6 +134,7 @@ Args parseArguments(int argc, char** argv) {
     args.excludeMoves = excludeArg.getValue();
 
     args.printStructures = printfilesSwitch.getValue();
+    args.pdbStructures = pdbSwitch.getValue();
       
     if(args.coolrate < 0.0 or args.coolrate > 1.0) throw std::range_error("Error: Cooling rate (-c) should be between 0 and 1");
     if(args.occupancy < 0.0 or args.occupancy > 1.0) throw std::range_error("Error: Occupancy (-y) should be between 0 and 1");
@@ -221,6 +228,14 @@ cerr << "0 " << model.getLossScore() << endl;
   else {
     cout << model.getCMM();
   }
+
+  if(args.pdbStructures)
+  {
+    boost::filesystem::path dir(args.modelName);
+    boost::filesystem::create_directory(dir);
+    model.writePDB(args.modelName);
+  }
+
 
   exit(EXIT_SUCCESS);
 }

@@ -391,6 +391,33 @@ Move Model::accept(Move &mov) { // Accepts the coordinates of mov, returns the c
 }
 
 
+void Model::writePDB(string modelName) {
+  stringstream res;
+
+  vector<Chromosome>::iterator chriter;
+  boost::container::static_vector<Bead,MAXSIZE>::iterator beaditer;
+  std::ofstream myfile;
+
+  uint counter;
+  std::string filename; 
+  for(chriter = chromosomes.begin(); chriter != chromosomes.end(); chriter++) {
+    counter = 1;
+    filename = modelName + "/" + chriter->getName() + ".pdb";
+    myfile.open(filename.c_str());
+    res.str(""); //Clearing the stringstream
+    for(beaditer = chriter->begin(); beaditer != chriter->end(); beaditer++) {
+      res << "ATOM" << std::setw(7) << counter << std::setw(4) << "CA" << std::setw(5) << "MET" << std::setw(6) << counter << std::setw(12) << std::setprecision(4) << beaditer->getX() << std::setw(8) << std::setprecision(4) <<  beaditer->getY() << std::setw(8) << std::setprecision(4) << beaditer->getZ() << std::setw(6) << "1.00" << std::setw(6) << "0.00" << std::setw(12) << "C" << endl;
+      counter++;
+      }
+      for(uint i = 1;i<counter-1;i++)
+	  res << "CONECT" << std::setw(5) << i << std::setw(5) << i+1 << endl;
+      res << "END" << endl;
+      myfile << res.str();
+      myfile.close();  
+    }
+ }
+
+
 string Model::getCMM() {
   stringstream res;
 
