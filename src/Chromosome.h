@@ -16,7 +16,7 @@ typedef boost::numeric::ublas::matrix<double> CoordinateMatrix;
 typedef boost::numeric::ublas::vector<double> CoordinateVector;
 typedef unsigned int uint;
 
-const uint MAXSIZE=1000; // Maximum size (number of beads) for each chromosome
+const uint MAXSIZE=5000; // Maximum size (number of beads) for each chromosome
 
 class Chromosome {
  public:
