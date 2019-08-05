@@ -199,7 +199,7 @@ double Model::getLossScore() {
   for(it1 = constraints.begin(); it1 != constraints.end(); it1++) {
       for(it2 = it1->second.begin(); it2 != it1->second.end(); it2++) {
 	constraintType = it2->getConstraintType();
-	if(constraintType == "INTERACTION" || constraintType == "INTERACTION_DIST" || constraintType == "INTERACTION_INTRA" || "INTERACTION_INTER") {
+	if(constraintType == "INTERACTION" || constraintType == "INTERACTION_DIST" || constraintType == "INTERACTION_INTRA" || constraintType == "INTERACTION_INTER") {
 	  res += it2->eval()/2;
 	}
 	else {
@@ -219,7 +219,7 @@ double Model::getLossScore(ConstraintType ctype) {
       for(it2 = it1->second.begin(); it2 != it1->second.end(); it2++) {
 	if(it2->constType == ctype) {
 	  constraintType = it2->getConstraintType();
-	  if(constraintType == "INTERACTION" || constraintType == "INTERACTION_DIST" || constraintType == "INTERACTION_INTRA" || "INTERACTION_INTER") {
+	  if(constraintType == "INTERACTION" || constraintType == "INTERACTION_DIST" || constraintType == "INTERACTION_INTRA" || constraintType == "INTERACTION_INTER") {
 	   res += it2->eval()/2;
 	  }
 	  else {
