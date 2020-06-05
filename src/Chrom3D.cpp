@@ -42,7 +42,7 @@ struct Args {
 };
 
 Args parseArguments(int argc, char** argv) {
-  string VERSION="1.0.1";
+  string VERSION="1.0.2";
   Args args;
     try {  
     TCLAP::CmdLine cmd("Chrom3D is a 3D genome modeling platform designed to incorporate a versatile set of constraints. For example, Chrom3D can simultaneously incorporate chromosomal interaction constraints (such as Hi-C) and constraints from chromosome association with the nuclear periphery." , ' ', VERSION);
