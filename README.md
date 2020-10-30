@@ -34,15 +34,12 @@ The final structures from Chrom3D are saved in "cmm" format that can be visualiz
 
 
 ## Installation
-Download Chrom3D source package by running following command in a terminal:
-
-`git clone https://github.com/CollasLab/Chrom3D.git`
-
-or download the zip file from [text link] https://github.com/CollasLab/Chrom3D/archive/master.zip and extract the file to a prefered directory.
+Download Chrom3D source package here:
+https://github.com/Chrom3D/Chrom3D/releases/tag/v1.0.2
 
 Enter Chrom3D directory and compile the program by typing `make` in the terminal.
 
-The resulting Chrom3D binary should then be created for you in this folder.
+The resulting Chrom3D binary should then be created for you in this folder. If you want `Chrom3D` available in your path, you can move the binary to somewhere available in your `$PATH`, for example `~/bin/`. 
 
 Errors?  Please report them under [Issues](https://github.com/CollasLab/Chrom3D/issues)
 
