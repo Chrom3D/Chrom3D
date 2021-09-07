@@ -102,7 +102,7 @@ void Model::addInteractionUpperDistanceConstraint(string beadId1, string beadId2
 void Model::addBoundaryConstraint(string beadId, double boundaryRadius, double springConstant /*=1*/) {
   assert(getBead.find(beadId) != getBead.end()); 
   Bead* b1 = getBead[beadId];  
-  this->addConstraint(Constraint(b1, &(this->centerBead), boundaryRadius - b1->getRadius(), BOUNDARY, springConstant, boundaryRadius - b1->getRadius()));
+  this->addConstraint(Constraint(b1, &(this->centerBead), boundaryRadius, BOUNDARY, springConstant));
 }
 
 
@@ -125,6 +125,9 @@ void Model::addCenterConstraint(string beadId, double springConstant /*=1*/) {
   Bead* b1 = getBead[beadId];  
   this->addConstraint(Constraint(b1, &(this->centerBead), 0, CENTER, springConstant));
 }
+
+
+
 
 void Model::setNucleusRadius(double r) {
   assert(r > 0);
@@ -475,6 +478,7 @@ void Model::readGtrack(string filename, bool scaleBeadSizes/*=false*/, double nu
   map<string, string> beadId2chr;
   vector<string> peripheryIds;
   vector<string> centerIds;
+  vector<string> radialIds;
   vector<pair<string,string> > interactionIds;
   vector<pair<string,string> > interactionDistanceIds;
   vector<pair<string,string> > interactionLowerDistanceIds;
@@ -483,9 +487,12 @@ void Model::readGtrack(string filename, bool scaleBeadSizes/*=false*/, double nu
 
 
   std::map<idPair,double> distInfo;
+  std::map<string,double> radialDistInfo;
+  
   std::map<idPair,double> weightInfo;
   std::map<string,double> peripheryWeight;
   std::map<string,double> centerWeight;
+
   double beadRadius;
   
   bool hasPeriphery = false;
@@ -539,12 +546,6 @@ void Model::readGtrack(string filename, bool scaleBeadSizes/*=false*/, double nu
     chromosomes[fieldParser["seqid"]].addBead(myBead);
 
     if(hasPeriphery and fieldParser["periphery"] != ".") { 
-      if (fieldParser["periphery"] == "1") {
-	peripheryIds.push_back(fieldParser["id"]);
-      }
-      if (fieldParser["periphery"] == "0") {
-	centerIds.push_back(fieldParser["id"]);
-      }
       
       if (fieldParser["periphery"].find(",") != std::string::npos) { // has periphery-weights
 	if( util::split(fieldParser["periphery"], ',')[0] == "1") {
@@ -559,8 +560,17 @@ void Model::readGtrack(string filename, bool scaleBeadSizes/*=false*/, double nu
 	  //assert(false); // 'periphery' can be either 0 or 1, when a weight is given.
             std::string error_line = util::errorLine(line_counter,filename);
             throw std::logic_error(error_line + "Periphery can be either 0 or 1, when a weight is given.");
-	}	  
-	
+	}
+      }	// no weights:
+      if (fieldParser["periphery"] == "1") {
+	peripheryIds.push_back(fieldParser["id"]);
+      }
+      else if (fieldParser["periphery"] == "0") {
+	centerIds.push_back(fieldParser["id"]);
+      }
+      else if (fieldParser["periphery"] != "."){
+	radialDistInfo[fieldParser["id"]] =  boost::lexical_cast<double>(fieldParser["periphery"]);
+        radialIds.push_back(fieldParser["id"]);
       }
     }
 
@@ -740,6 +750,10 @@ void Model::readGtrack(string filename, bool scaleBeadSizes/*=false*/, double nu
     this->addPeripheryConstraint(*it,w);
   }
 
+  // Adding radial:
+  for(vector<string>::iterator it = radialIds.begin();  it != radialIds.end(); it++) {
+    this->addBoundaryConstraint(*it, radialDistInfo[*it]);
+  }
 
   // Adding center contraint:
   for(vector<string>::iterator it = centerIds.begin(); it != centerIds.end(); it++) {
@@ -875,17 +889,18 @@ void Model::addNucleusConstraints(double springConstant /*=1*/) {
   }
 }
 
+//
+//void Model::addBoundaryConstraints(double springConstant /*=1*/) {
+//  assert(this->hasNucleus);
+//  vector<Chromosome>::iterator chriter;
+//  boost::container::static_vector<Bead,MAXSIZE>::iterator beaditer;  
+//  for(chriter = chromosomes.begin(); chriter != chromosomes.end(); chriter++) {
+//    for(beaditer=chriter->begin(); beaditer!=chriter->end(); beaditer++) {
+//      this->addBoundaryConstraint(beaditer->getID(), this->nucleusRadius, springConstant);
+//    }
+//  }
+//}
 
-void Model::addBoundaryConstraints(double springConstant /*=1*/) {
-  assert(this->hasNucleus);
-  vector<Chromosome>::iterator chriter;
-  boost::container::static_vector<Bead,MAXSIZE>::iterator beaditer;  
-  for(chriter = chromosomes.begin(); chriter != chromosomes.end(); chriter++) {
-    for(beaditer=chriter->begin(); beaditer!=chriter->end(); beaditer++) {
-      this->addBoundaryConstraint(beaditer->getID(), this->nucleusRadius, springConstant);
-    }
-  }
-}
 
 void Model::addCenterConstraints(double springConstant /*=1*/) {
   assert(this->hasNucleus);

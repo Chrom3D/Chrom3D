@@ -66,7 +66,7 @@ class Model {
   uint getNumberOfBeads();
   void addNucleusConstraints(double springConstant=1.0);
   void addCenterConstraints(double springConstant=1.0);
-  void addBoundaryConstraints(double springConstant=1.0);
+  //void addBoundaryConstraints(double springConstant=1.0);
   void addSmartConstraints(double springConstant=1.0);
 
   
