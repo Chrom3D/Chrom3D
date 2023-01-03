@@ -68,7 +68,7 @@ namespace util {
   class MoveException: public std::exception {
   public:
     MoveException();
-    const char* what(){return "Unacceptable move!";}
+    virtual const char* what() const noexcept {return "Unacceptable move!";}
   };
 
 }
