@@ -11,15 +11,13 @@
 #include <math.h>
 #include <limits>
 #include <stdexcept>
+#include <string>
 
 #include <sstream>
 
 //#include <boost/filesystem.hpp>
 
 #include "../src/tclap-1.2.1/include/tclap/CmdLine.h"
-
-#define SSTR( x ) dynamic_cast< std::ostringstream & >( \
-        ( std::ostringstream() << std::dec << x ) ).str()
 
 using namespace std;
 
@@ -215,7 +213,7 @@ cerr << "0 " << model.getLossScore() << endl;
     assert(success);
     if (i % verbosity == 0) {
       if(args.printStructures) {
-	model.writeCMM(args.modelName + "_iter_" + SSTR(i) + ".cmm");
+	model.writeCMM(args.modelName + "_iter_" + std::to_string(i) + ".cmm");
       }
       //cerr << i << " " << model.getLossScore(INTERACTION_INTRA) << " " << model.getLossScore(INTERACTION_INTER) << " " << model.getLossScore(PERIPHERY) << " " << model.getLossScore(CENTER) << " " << model.getLossScore(INTERACTION_DIST) << " " << model.getLossScore() << endl;
       cerr << i << " " << model.getLossScore() << endl;
