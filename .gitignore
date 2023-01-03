@@ -1,4 +1,7 @@
-*.cmm
-*~
-\#*
+.idea/
 Chrom3D
+build/
+cmake-build*
+*~
+*.cmm
+\#*
