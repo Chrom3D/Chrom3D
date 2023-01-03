@@ -192,10 +192,11 @@ int main(int argc, char** argv) {
   //model.buildHashMap();
 
   MCMC mcmc(model);
-  bool success;
   double maxTemp = args.maxtemp;
   double coolRate = args.coolrate; // Number between 0 and 1, giving the rate of cooling at each step
   double temp=maxTemp;
+  bool success;
+  (void)success; // [[maybe_unused]]
 
   uint verbosity = (args.verbose == 0) ? args.nIter+1 : args.verbose;
 
