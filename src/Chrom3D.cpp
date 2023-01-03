@@ -193,7 +193,6 @@ int main(int argc, char** argv) {
 
   MCMC mcmc(model);
   bool success;
-  uint Niter=args.nIter;
   double maxTemp = args.maxtemp;
   double coolRate = args.coolrate; // Number between 0 and 1, giving the rate of cooling at each step
   double temp=maxTemp;
