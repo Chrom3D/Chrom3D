@@ -66,6 +66,41 @@ set(COMPILER_WARNINGS
     -Wnull-dereference)
 target_compile_options(Chrom3D PRIVATE ${COMPILER_WARNINGS})
 
+# Add options to enable/disable sanitizers
+option(ENABLE_SANITIZER_ADDRESS "Enable ASAN" OFF)
+option(ENABLE_SANITIZER_ADDRESS "Enable LSAN" OFF)
+option(ENABLE_SANITIZER_UNDEFINED_BEHAVIOR "Enable UBSAN" OFF)
+
+set(SANITIZERS "")
+
+if(ENABLE_SANITIZER_ADDRESS)
+  set(SANITIZERS "address")
+endif()
+
+if(ENABLE_SANITIZER_LEAK)
+  if("${SANITIZERS}" STREQUAL "")
+    set(SANITIZERS "leak")
+  else()
+    set(SANITIZERS "${SANITIZERS},leak")
+  endif()
+endif()
+
+if(ENABLE_SANITIZER_UNDEFINED_BEHAVIOR)
+  if("${SANITIZERS}" STREQUAL "")
+    set(SANITIZERS "undefined")
+  else()
+    set(SANITIZERS "${SANITIZERS},undefined")
+  endif()
+endif()
+
+if(NOT
+   "${SANITIZERS}"
+   STREQUAL
+   "")
+  target_compile_options(Chrom3D PRIVATE -fsanitize=${SANITIZERS})
+  target_link_options(Chrom3D PRIVATE -fsanitize=${SANITIZERS})
+endif()
+
 include(GNUInstallDirs)
 
 install(TARGETS Chrom3D BUNDLE DESTINATION ${CMAKE_INSTALL_BINDIR})
