@@ -37,7 +37,10 @@ endif()
 add_executable(Chrom3D)
 
 target_compile_features(Chrom3D PRIVATE cxx_std_${CMAKE_CXX_STANDARD})
-set_target_properties(Chrom3D PROPERTIES INTERPROCEDURAL_OPTIMIZATION ${CMAKE_INTERPROCEDURAL_OPTIMIZATION})
+
+if(CMAKE_INTERPROCEDURAL_OPTIMIZATION)
+  set_target_properties(Chrom3D PROPERTIES INTERPROCEDURAL_OPTIMIZATION ON)
+endif()
 
 target_sources(
   Chrom3D
