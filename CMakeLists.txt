@@ -12,7 +12,7 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 
 if(NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE
-      "RelWithDebInfo"
+      "Release"
       CACHE STRING "" FORCE)
 endif()
 
