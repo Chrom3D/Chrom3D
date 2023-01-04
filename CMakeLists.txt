@@ -21,6 +21,7 @@ if(NOT BUILD_SHARED_LIBS)
 endif()
 find_package(Boost 1.54.0 REQUIRED COMPONENTS filesystem random)
 
+# Try to enable IPO when compiling in Release
 if(CMAKE_BUILD_TYPE STREQUAL "Release" OR CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo")
   include(CheckIPOSupported)
   check_ipo_supported(RESULT result OUTPUT output)
@@ -36,11 +37,7 @@ endif()
 
 add_executable(Chrom3D)
 
-target_compile_features(Chrom3D PRIVATE cxx_std_${CMAKE_CXX_STANDARD})
-
-if(CMAKE_INTERPROCEDURAL_OPTIMIZATION)
-  set_target_properties(Chrom3D PROPERTIES INTERPROCEDURAL_OPTIMIZATION ON)
-endif()
+target_include_directories(Chrom3D PRIVATE src/ src/tclap-1.2.1/include/)
 
 target_sources(
   Chrom3D
@@ -53,9 +50,13 @@ target_sources(
           ${CMAKE_CURRENT_SOURCE_DIR}/src/Randomizer.cpp
           ${CMAKE_CURRENT_SOURCE_DIR}/src/Util.cpp)
 
-target_include_directories(Chrom3D PRIVATE src/ src/tclap-1.2.1/include/)
-
 target_link_libraries(Chrom3D PUBLIC m Boost::headers Boost::random)
+
+target_compile_features(Chrom3D PRIVATE cxx_std_${CMAKE_CXX_STANDARD})
+
+if(CMAKE_INTERPROCEDURAL_OPTIMIZATION)
+  set_target_properties(Chrom3D PROPERTIES INTERPROCEDURAL_OPTIMIZATION ON)
+endif()
 
 set(COMPILER_WARNINGS
     -Wall
