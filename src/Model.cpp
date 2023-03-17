@@ -962,6 +962,7 @@ void Model::rescaleBeadSizes(double occupancyFactor) {
   assert(this->hasNucleus);
   vector<Chromosome>::iterator chriter;
   boost::container::static_vector<Bead,MAXSIZE>::iterator beaditer;
+  double beadVol = this->getTotalBeadVolume();
   double genomeLength = this->getTotalGenomeLength();
   for(chriter = chromosomes.begin(); chriter != chromosomes.end(); chriter++) {
     for(beaditer=chriter->begin(); beaditer!=chriter->end(); beaditer++) {
