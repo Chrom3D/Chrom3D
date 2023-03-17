@@ -11,6 +11,7 @@
 #include <math.h>
 #include <limits>
 #include <stdexcept>
+#include <string>
 
 #include <sstream>
 
@@ -191,11 +192,11 @@ int main(int argc, char** argv) {
   //model.buildHashMap();
 
   MCMC mcmc(model);
-  bool success;
-  uint Niter=args.nIter;
   double maxTemp = args.maxtemp;
   double coolRate = args.coolrate; // Number between 0 and 1, giving the rate of cooling at each step
   double temp=maxTemp;
+  bool success;
+  (void)success; // [[maybe_unused]]
 
   uint verbosity = (args.verbose == 0) ? args.nIter+1 : args.verbose;
 
@@ -212,7 +213,7 @@ cerr << "0 " << model.getLossScore() << endl;
     assert(success);
     if (i % verbosity == 0) {
       if(args.printStructures) {
-	model.writeCMM(args.modelName + "_iter_" + to_string(i) + ".cmm");
+	      model.writeCMM(args.modelName + "_iter_" + to_string(i) + ".cmm");
       }
       //cerr << i << " " << model.getLossScore(INTERACTION_INTRA) << " " << model.getLossScore(INTERACTION_INTER) << " " << model.getLossScore(PERIPHERY) << " " << model.getLossScore(CENTER) << " " << model.getLossScore(INTERACTION_DIST) << " " << model.getLossScore() << endl;
       cerr << i << " " << model.getLossScore() << endl;
