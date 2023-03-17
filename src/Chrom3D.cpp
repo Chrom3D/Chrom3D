@@ -213,7 +213,7 @@ cerr << "0 " << model.getLossScore() << endl;
     assert(success);
     if (i % verbosity == 0) {
       if(args.printStructures) {
-	model.writeCMM(args.modelName + "_iter_" + std::to_string(i) + ".cmm");
+	      model.writeCMM(args.modelName + "_iter_" + to_string(i) + ".cmm");
       }
       //cerr << i << " " << model.getLossScore(INTERACTION_INTRA) << " " << model.getLossScore(INTERACTION_INTER) << " " << model.getLossScore(PERIPHERY) << " " << model.getLossScore(CENTER) << " " << model.getLossScore(INTERACTION_DIST) << " " << model.getLossScore() << endl;
       cerr << i << " " << model.getLossScore() << endl;
