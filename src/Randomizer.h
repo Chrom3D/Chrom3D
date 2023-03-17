@@ -24,7 +24,6 @@ class Move {
 class Randomizer {
  public:
   virtual Move randomize(Chromosome&, ENG&) = 0;
-  virtual ~Randomizer() noexcept = default;
 };
 
 

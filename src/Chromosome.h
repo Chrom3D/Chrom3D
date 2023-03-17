@@ -43,6 +43,7 @@ class Chromosome {
   friend bool operator!=(const Chromosome&, const Chromosome&);
   void setColor(double, double, double);
  private:
+  bool fixed;
   std::string name;
   //std::vector<Bead> beadList;
   boost::container::static_vector<Bead,MAXSIZE> beadList;
