@@ -11,20 +11,17 @@
 #include <algorithm>
 #include <string>
 #include <map>
-#include <boost/ptr_container/ptr_vector.hpp>
-#include <boost/lexical_cast.hpp>
+#include <memory>
 #include <iostream>
 #include <fstream>
 #include <numeric>
 #include <iomanip>
 #include <string>
 
-#include <boost/unordered_map.hpp>
 #include <math.h>
 #include <list>
 #include <limits>
 
-#include <boost/unordered_set.hpp>
 
 #include <sstream>
 
@@ -81,7 +78,7 @@ class Model {
   
   std::map<std::string, std::vector<Constraint> > constraints;
   std::map<std::string, std::vector<Constraint> > constraintsOFF;
-  boost::ptr_vector<Randomizer> randomizers; //http://www.boost.org/doc/libs/1_55_0/libs/ptr_container/doc/tutorial.html
+  std::vector<std::unique_ptr<Randomizer> > randomizers; // The model owns (and deletes) the randomizers, as with the boost::ptr_vector before
   std::vector<double> randomizerWeights;
   double getTotalBeadVolume();
   double getTotalGenomeLength();

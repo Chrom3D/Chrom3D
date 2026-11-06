@@ -28,7 +28,7 @@ vector<Chromosome>::iterator Model::end() {
 void Model::updateBeadMap() {
   this->getBead.clear();
   vector<Chromosome>::iterator chriter;
-  boost::container::static_vector<Bead,MAXSIZE>::iterator beaditer; 
+  BeadIterator beaditer; 
   for(chriter = chromosomes.begin(); chriter != chromosomes.end(); chriter++) {
     for(beaditer = chriter->begin(); beaditer != chriter->end(); beaditer++) {
       getBead[beaditer->getID()] = &(*beaditer);
@@ -238,7 +238,7 @@ double Model::getLossScore(ConstraintType ctype) {
 
 
 double Model::getPartialLossScore(Chromosome &chr, uint startPos, uint endPos) {
-  boost::container::static_vector<Bead,MAXSIZE>::iterator it;
+  BeadIterator it;
   vector<Constraint>::iterator it2;
   double res = 0;
   for(it = chr.begin() + startPos; it != chr.begin() + endPos+1; it++) {
@@ -256,7 +256,7 @@ double Model::getPartialLossScore(Chromosome &chr, uint startPos, uint endPos) {
 }
 
 void Model::addRandomizer(Randomizer* randomizer, double weight/*=1.0*/) {
-  randomizers.push_back(randomizer);
+  randomizers.push_back(std::unique_ptr<Randomizer>(randomizer));
   randomizerWeights.push_back(weight);
 }
 
@@ -273,7 +273,7 @@ Move Model::proposeMove(uint maxAttempts/*=10000*/) {
   uint iRand = weightedSamplePos(randomizerWeights, randEngine);
   uint iChr = util::unif_int(0, chromosomes.size()-1, randEngine);
   for(uint i=0; i!=maxAttempts; i++) {
-    Move mov = randomizers[iRand].randomize(chromosomes[iChr], randEngine);
+    Move mov = randomizers[iRand]->randomize(chromosomes[iChr], randEngine);
     if(mov.mat.size1()!=0) {
       mov.validate();
       if (not isClashing(mov)) {
@@ -289,7 +289,7 @@ Move Model::proposeMove(uint maxAttempts/*=10000*/) {
 bool Model::isClashing(Move &mov, bool onlyIntra /*=false*/) { //
 
   vector<Chromosome>::iterator chriter;  
-  boost::container::static_vector<Bead,MAXSIZE>::iterator beaditer;
+  BeadIterator beaditer;
 
   uint movSize = (mov.stop-mov.start)+1;
   for(uint i=0; i!=movSize; i++) {
@@ -340,8 +340,8 @@ bool Model::detectClash(){
 
   vector<Chromosome>::iterator chriter1; 
   vector<Chromosome>::iterator chriter2;  
-  boost::container::static_vector<Bead,MAXSIZE>::iterator beaditer1;
-  boost::container::static_vector<Bead,MAXSIZE>::iterator beaditer2;
+  BeadIterator beaditer1;
+  BeadIterator beaditer2;
   
   for(chriter1 = chromosomes.begin(); chriter1 != chromosomes.end(); chriter1++) {
     for(beaditer1 = chriter1->begin(); beaditer1 != chriter1->end(); beaditer1++) {
@@ -398,7 +398,7 @@ void Model::writePDB(string modelName) {
   stringstream res;
 
   vector<Chromosome>::iterator chriter;
-  boost::container::static_vector<Bead,MAXSIZE>::iterator beaditer;
+  BeadIterator beaditer;
   std::ofstream myfile;
 
   uint counter;
@@ -425,7 +425,7 @@ string Model::getCMM() {
   stringstream res;
 
   vector<Chromosome>::iterator chriter;
-  boost::container::static_vector<Bead,MAXSIZE>::iterator beaditer;
+  BeadIterator beaditer;
   double smallestBead = numeric_limits<double>::infinity();
   for(chriter = chromosomes.begin(); chriter != chromosomes.end(); chriter++) {
     for(beaditer = chriter->begin(); beaditer != chriter->end(); beaditer++) {
@@ -529,18 +529,18 @@ void Model::readGtrack(string filename, bool scaleBeadSizes/*=false*/, double nu
 
     beadRadius = 0.5; // Default bead radius size
     if(hasBeadRadius) {
-      beadRadius = boost::lexical_cast<double>(fieldParser["radius"]);
+      beadRadius = util::parseNumber<double>(fieldParser["radius"]);
     }
 
     
-    Bead myBead(boost::lexical_cast<int>(fieldParser["start"]), boost::lexical_cast<int>(fieldParser["end"]), beadRadius, fieldParser["id"]);
+    Bead myBead(util::parseNumber<int>(fieldParser["start"]), util::parseNumber<int>(fieldParser["end"]), beadRadius, fieldParser["id"]);
     myBead.setCoordinates(0,0,0); // Coordinates are not defined at this point, set all to zero.
     
     beadId2chr[fieldParser["id"]] = fieldParser["seqid"];
     
     if(hasColor) {
       vector<string> col = util::split(fieldParser["color"], ',');
-      myBead.setColor(boost::lexical_cast<float>(col[0]), boost::lexical_cast<float>(col[1]), boost::lexical_cast<float>(col[2]));
+      myBead.setColor(util::parseNumber<float>(col[0]), util::parseNumber<float>(col[1]), util::parseNumber<float>(col[2]));
     }
         
     chromosomes[fieldParser["seqid"]].addBead(myBead);
@@ -550,11 +550,11 @@ void Model::readGtrack(string filename, bool scaleBeadSizes/*=false*/, double nu
       if (fieldParser["periphery"].find(",") != std::string::npos) { // has periphery-weights
 	if( util::split(fieldParser["periphery"], ',')[0] == "1") {
 	  peripheryIds.push_back(fieldParser["id"]);
-	  peripheryWeight[fieldParser["id"]] = boost::lexical_cast<double>(util::split(fieldParser["periphery"], ',')[1]);
+	  peripheryWeight[fieldParser["id"]] = util::parseNumber<double>(util::split(fieldParser["periphery"], ',')[1]);
 	}
 	else if( util::split(fieldParser["periphery"], ',')[0] == "0") {
 	  centerIds.push_back(fieldParser["id"]);
-	  centerWeight[fieldParser["id"]] = boost::lexical_cast<double>(util::split(fieldParser["periphery"], ',')[1]);
+	  centerWeight[fieldParser["id"]] = util::parseNumber<double>(util::split(fieldParser["periphery"], ',')[1]);
 	}
 	else {
 	  //assert(false); // 'periphery' can be either 0 or 1, when a weight is given.
@@ -569,7 +569,7 @@ void Model::readGtrack(string filename, bool scaleBeadSizes/*=false*/, double nu
 	centerIds.push_back(fieldParser["id"]);
       }
       else if (fieldParser["periphery"] != "."){
-	radialDistInfo[fieldParser["id"]] =  boost::lexical_cast<double>(fieldParser["periphery"]);
+	radialDistInfo[fieldParser["id"]] =  util::parseNumber<double>(fieldParser["periphery"]);
         radialIds.push_back(fieldParser["id"]);
       }
     }
@@ -820,7 +820,7 @@ void Model::readGtrack(string filename, bool scaleBeadSizes/*=false*/, double nu
 
 double Model::getTotalChrLength() {
   vector<Chromosome>::iterator chriter;
-  boost::container::static_vector<Bead,MAXSIZE>::iterator beaditer;
+  BeadIterator beaditer;
   double res = 0;
   for(chriter = chromosomes.begin(); chriter != chromosomes.end(); chriter++) {
     for(beaditer=chriter->begin(); beaditer!=chriter->end(); beaditer++) {
@@ -847,12 +847,12 @@ uint Model::numberOfChromosomes() {
 
 void Model::resetAllChromosomes(uint maxAttempts /*=1000*/) { //, bool updateClash /*=false*/) {
   vector<Chromosome>::iterator chriter;
-  boost::container::static_vector<Bead,MAXSIZE>::iterator beaditer;  
+  BeadIterator beaditer;  
   double L = (this->getTotalChrLength() / this->numberOfChromosomes()) * 0.1;
   for(chriter = chromosomes.begin(); chriter != chromosomes.end(); chriter++) {
     vector<double> radii;
     Move mov(*chriter);
-    boost::container::static_vector<Bead,MAXSIZE>::iterator beaditer;
+    BeadIterator beaditer;
     for(beaditer=chriter->begin(); beaditer!=chriter->end(); beaditer++) {
       radii.push_back(beaditer->getRadius());
     }
@@ -881,7 +881,7 @@ void Model::resetAllChromosomes(uint maxAttempts /*=1000*/) { //, bool updateCla
 void Model::addNucleusConstraints(double springConstant /*=1*/) {
   assert(this->hasNucleus);
   vector<Chromosome>::iterator chriter;
-  boost::container::static_vector<Bead,MAXSIZE>::iterator beaditer;  
+  BeadIterator beaditer;  
   for(chriter = chromosomes.begin(); chriter != chromosomes.end(); chriter++) {
     for(beaditer=chriter->begin(); beaditer!=chriter->end(); beaditer++) {
       this->addNucleusConstraint(beaditer->getID(),springConstant);
@@ -893,7 +893,7 @@ void Model::addNucleusConstraints(double springConstant /*=1*/) {
 //void Model::addBoundaryConstraints(double springConstant /*=1*/) {
 //  assert(this->hasNucleus);
 //  vector<Chromosome>::iterator chriter;
-//  boost::container::static_vector<Bead,MAXSIZE>::iterator beaditer;  
+//  BeadIterator beaditer;  
 //  for(chriter = chromosomes.begin(); chriter != chromosomes.end(); chriter++) {
 //    for(beaditer=chriter->begin(); beaditer!=chriter->end(); beaditer++) {
 //      this->addBoundaryConstraint(beaditer->getID(), this->nucleusRadius, springConstant);
@@ -905,7 +905,7 @@ void Model::addNucleusConstraints(double springConstant /*=1*/) {
 void Model::addCenterConstraints(double springConstant /*=1*/) {
   assert(this->hasNucleus);
   vector<Chromosome>::iterator chriter;
-  boost::container::static_vector<Bead,MAXSIZE>::iterator beaditer;  
+  BeadIterator beaditer;  
   for(chriter = chromosomes.begin(); chriter != chromosomes.end(); chriter++) {
     for(beaditer=chriter->begin(); beaditer!=chriter->end(); beaditer++) {
       this->addCenterConstraint(beaditer->getID(), springConstant);
@@ -918,7 +918,7 @@ std::vector<double> Model::calculateScorePerConstraint(Chromosome& chr, uint sta
   
   std::vector<double> myScore(C_T_COUNT,0.0);
   
-  boost::container::static_vector<Bead,MAXSIZE>::iterator it;
+  BeadIterator it;
   vector<Constraint>::iterator it2;
   for(it = chr.begin() + startPos; it != chr.begin() + endPos+1; it++) {
     for(it2 = constraints[it->getID()].begin(); it2 != constraints[it->getID()].end(); it2++) {
@@ -936,7 +936,7 @@ std::vector<double> Model::calculateScorePerConstraint(Chromosome& chr, uint sta
 
 double Model::getTotalBeadVolume() {
   vector<Chromosome>::iterator chriter;
-  boost::container::static_vector<Bead,MAXSIZE>::iterator beaditer;
+  BeadIterator beaditer;
   double res = 0;
   for(chriter = chromosomes.begin(); chriter != chromosomes.end(); chriter++) {
     for(beaditer=chriter->begin(); beaditer!=chriter->end(); beaditer++) {
@@ -948,7 +948,7 @@ double Model::getTotalBeadVolume() {
 
 double Model::getTotalGenomeLength() {
   vector<Chromosome>::iterator chriter;
-  boost::container::static_vector<Bead,MAXSIZE>::iterator beaditer;
+  BeadIterator beaditer;
   double res = 0;
   for(chriter = chromosomes.begin(); chriter != chromosomes.end(); chriter++) {
     for(beaditer=chriter->begin(); beaditer!=chriter->end(); beaditer++) {
@@ -961,7 +961,7 @@ double Model::getTotalGenomeLength() {
 void Model::rescaleBeadSizes(double occupancyFactor) {
   assert(this->hasNucleus);
   vector<Chromosome>::iterator chriter;
-  boost::container::static_vector<Bead,MAXSIZE>::iterator beaditer;
+  BeadIterator beaditer;
   double beadVol = this->getTotalBeadVolume();
   double genomeLength = this->getTotalGenomeLength();
   for(chriter = chromosomes.begin(); chriter != chromosomes.end(); chriter++) {

@@ -3,8 +3,17 @@
 using namespace std;
 namespace util {
 
+// Replaces boost::numeric::ublas::norm_2 (the Euclidean length of a vector)
+static double norm_2(const CoordinateVector &vec) {
+  double t = 0;
+  for(uint i=0; i!=vec.size(); i++) {
+    t += vec(i) * vec(i);
+  }
+  return sqrt(t);
+}
+
 double euclideanDistance(CoordinateVector vec1, CoordinateVector vec2) {
-  return ublas::norm_2(vec1-vec2);
+  return norm_2(vec1-vec2);
 }
 
 
@@ -19,7 +28,7 @@ CoordinateMatrix repeatVector(CoordinateVector vec, uint n) {
 }
 
 CoordinateVector normalizeVector(CoordinateVector vec) {
-  return vec / boost::numeric::ublas::norm_2(vec);
+  return vec / norm_2(vec);
 }
 
 
@@ -46,22 +55,55 @@ CoordinateMatrix rotatePointsAroundArbitraryAxis(double theta, CoordinateVector 
   rotMat(2,2) =  t*uz*uz + C;
 
 
+  // Same calculation as the earlier ublas version, trans(prod(rotMat, trans(mat - startPoint))) + startPoint,
+  // with the sums done in the same order:
   CoordinateMatrix res(mat.size1(),3);
-  
-  res = ublas::trans(ublas::prod(rotMat, ublas::trans(mat-repeatVector(startPoint,mat.size1())))); // rotated matrix at origo
-
-  return res + repeatVector(startPoint,mat.size1()); // rotated matrix transformed back to original coordinate system
+  for(uint j=0; j!=mat.size1(); j++) {
+    for(uint i=0; i!=3; i++) {
+      double rotated = 0; // row j of the rotated matrix at origo
+      for(uint k=0; k!=3; k++) {
+        rotated += rotMat(i,k) * (mat(j,k) - startPoint(k));
+      }
+      res(j,i) = rotated + startPoint(i); // rotated matrix transformed back to original coordinate system
+    }
+  }
+  return res;
 }
 
 
+// unif_real and unif_int use the same algorithms as boost::random::uniform_real_distribution and
+// boost::random::uniform_int_distribution (used in earlier versions), so a given seed gives the
+// same random numbers as before. (The std:: distributions are not guaranteed to do that, and give
+// different numbers with different compilers.)
+
 double unif_real(double min, double max, ENG &eng) {
-  boost::random::uniform_real_distribution<double> urd = boost::random::uniform_real_distribution<double>(min,max);
-  return urd(eng);
+  for(;;) {
+    double numerator = static_cast<double>(eng() - ENG::min());
+    double divisor = static_cast<double>(ENG::max() - ENG::min()) + 1;
+    double result = numerator / divisor * (max - min) + min;
+    if(result < max) return result;
+  }
 }
 
 int unif_int(uint min, uint max, ENG &eng) {
-  boost::random::uniform_int_distribution<int> urd = boost::random::uniform_int_distribution<int>(min,max);
-  return urd(eng);
+  int minValue = min;
+  int maxValue = max;
+  assert(minValue <= maxValue);
+  const uint32_t range = uint32_t(maxValue) - uint32_t(minValue);
+  const uint32_t engineRange = ENG::max() - ENG::min();
+  assert(range < engineRange);
+  if(range == 0) {
+    return minValue;
+  }
+  // Split the generator's output into range+1 equally sized buckets; reject numbers beyond the last bucket.
+  uint32_t bucketSize = engineRange / (range+1);
+  if(engineRange % (range+1) == range) {
+    bucketSize++;
+  }
+  for(;;) {
+    uint32_t result = (eng() - ENG::min()) / bucketSize;
+    if(result <= range) return minValue + int(result);
+  }
 }
 
 bool coordClash(double x1, double y1, double z1, double x2, double y2, double z2, double radius1, double radius2) {
@@ -76,10 +118,12 @@ bool coordClash(CoordinateVector vec1, CoordinateVector vec2, double radius1, do
 }
   
   
-bool coordClash(CoordinateVector vec, CoordinateMatrix mat, double radius, vector<double> radii) {
-  for(uint i=0; i!=mat.size1(); i++) {
-    
-    if(coordClash(vec,ublas::row(mat,i), radius, radii[i])) {
+// Does the bead at vec clash with any of the first nRows beads in mat? (Replaces passing a
+// ublas::project of the first rows.)
+bool coordClash(CoordinateVector vec, const CoordinateMatrix &mat, uint nRows, double radius, const vector<double> &radii) {
+  for(uint i=0; i!=nRows; i++) {
+
+    if(coordClash(vec(0), vec(1), vec(2), mat(i,0), mat(i,1), mat(i,2), radius, radii[i])) {
       return true;
     }
   }
@@ -90,7 +134,6 @@ bool coordClash(CoordinateVector vec, CoordinateMatrix mat, double radius, vecto
 
 CoordinateMatrix createSelfAvoidingWalk(vector<double> radii, CoordinateVector origin, ENG& eng, uint maxIter) {
   assert(radii.size() > 0);
-  CoordinateVector tmpRadii;
   double prevRadius=radii[0];
   CoordinateVector prevCoords = origin;
   CoordinateMatrix newCoords(radii.size(), 3); newCoords(0,0) = origin(0);   newCoords(0,1) = origin(1); newCoords(0,2) = origin(2);
@@ -113,12 +156,10 @@ CoordinateMatrix createSelfAvoidingWalk(vector<double> radii, CoordinateVector o
       z += prevCoords(2);
 
       CoordinateVector proposedCoords(3); proposedCoords(0) = x; proposedCoords(1) = y; proposedCoords(2) = z;
-      vector<double> tmpRadii(radii.begin(), radii.begin()+i+1);
-     
-      cout.precision(15);
-      CoordinateVector newc = ublas::row(newCoords,i);
 
-      if(not coordClash(proposedCoords, project(newCoords, boost::numeric::ublas::range(0, i), boost::numeric::ublas::range(0,3)), radii[i], tmpRadii)) {
+      cout.precision(15);
+
+      if(not coordClash(proposedCoords, newCoords, i, radii[i], radii)) { // compare with the i beads placed so far
 	       break;
       }
     }
@@ -186,7 +227,7 @@ std::map<std::string, std::string> makeMap(std::vector<std::string> vec1, std::v
 std::string errorLine(uint line_counter, std::string filename)
 {
   std::ostringstream oss;
-  oss << "Error in the line #" << boost::lexical_cast<std::string>(line_counter) << " of the GTrack file " << filename << endl;
+  oss << "Error in the line #" << line_counter << " of the GTrack file " << filename << endl;
   std::string error_line = oss.str();
   return error_line;	
 }

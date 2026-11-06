@@ -3,20 +3,16 @@
 
 #include <vector>
 #include <map>
-#include <boost/numeric/ublas/matrix.hpp>
-#include <boost/numeric/ublas/io.hpp> 
-#include <boost/numeric/ublas/matrix_proxy.hpp>
-#include <boost/container/static_vector.hpp>
 #include <string>
 #include "Util.h"
 #include "Bead.h"
 
-//typedef boost::container::static_vector<Bead,1000>::iterator beadIter;
-typedef boost::numeric::ublas::matrix<double> CoordinateMatrix;
-typedef boost::numeric::ublas::vector<double> CoordinateVector;
 typedef unsigned int uint;
 
-const uint MAXSIZE=5000; // Maximum size (number of beads) for each chromosome
+// The beads of a chromosome are kept in a std::vector (before: a boost::container::static_vector
+// with room for at most 5000 beads). Constraints keep pointers to beads, so beads must not be
+// added to a chromosome after constraints are created (as with the static_vector).
+typedef std::vector<Bead>::iterator BeadIterator;
 
 class Chromosome {
  public:
@@ -34,8 +30,8 @@ class Chromosome {
   CoordinateMatrix getBeadCoordinates(uint, uint);
   CoordinateVector getBeadCoordinates(uint);
   CoordinateMatrix getBeadCoordinates();
-  boost::container::static_vector<Bead, MAXSIZE>::iterator begin();
-  boost::container::static_vector<Bead, MAXSIZE>::iterator end();
+  BeadIterator begin();
+  BeadIterator end();
 
   Bead& operator[](const uint idx);
 
@@ -45,9 +41,8 @@ class Chromosome {
  private:
   bool fixed;
   std::string name;
-  //std::vector<Bead> beadList;
-  boost::container::static_vector<Bead,MAXSIZE> beadList;
-  
+  std::vector<Bead> beadList;
+
 };
 
 

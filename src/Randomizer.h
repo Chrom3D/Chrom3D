@@ -13,16 +13,15 @@ class Move {
   uint start;
   uint stop;
   CoordinateMatrix mat;
-  boost::container::static_vector<Bead, MAXSIZE>::iterator begin();
-  boost::container::static_vector<Bead, MAXSIZE>::iterator end();
-  CoordinateMatrix::const_iterator1 moveBegin();
-  CoordinateMatrix::const_iterator1 moveEnd();
+  BeadIterator begin();
+  BeadIterator end();
   void validate();
 };
 
 
 class Randomizer {
  public:
+  virtual ~Randomizer() {} // The Model deletes its randomizers through Randomizer pointers
   virtual Move randomize(Chromosome&, ENG&) = 0;
 };
 

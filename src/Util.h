@@ -11,39 +11,23 @@
 //#include "Chromosome.h"
 #include <math.h> 
 #include <iostream>
-#include <boost/numeric/ublas/operation.hpp>
-#include <boost/numeric/ublas/io.hpp>
-
-#include <boost/numeric/ublas/matrix.hpp>
-#include <boost/numeric/ublas/io.hpp> 
-#include <boost/numeric/ublas/matrix_proxy.hpp>
-#include <boost/container/static_vector.hpp>
-
-#include <boost/lexical_cast.hpp>
-
-#include <boost/random.hpp>
-#include <boost/random/uniform_int_distribution.hpp>
-#include <boost/random/uniform_real_distribution.hpp>
-#include <boost/random/variate_generator.hpp>
-#include <boost/random/mersenne_twister.hpp>
+#include <random>
 #include <numeric>
 #include <algorithm>
 
 #include <map>
 
 #include <exception>
+#include <stdexcept>
+
+#include "Coordinates.h"
 
 
-
-typedef boost::numeric::ublas::matrix<double> CoordinateMatrix;
-typedef boost::numeric::ublas::vector<double> CoordinateVector;
 typedef unsigned int uint;
 
-typedef boost::random::mt19937 ENG;
+typedef std::mt19937 ENG; // Same generator (and same numbers for a given seed) as boost::random::mt19937
 
 const double PRECISIONCONST=1.0e-15;
-
-namespace ublas = boost::numeric::ublas;
 
 
 namespace util {
@@ -56,7 +40,7 @@ namespace util {
   int unif_int(uint, uint, ENG&);
   bool coordClash(double, double, double, double, double, double, double, double);
   bool coordClash(CoordinateVector, CoordinateVector, double, double);
-  bool coordClash(CoordinateVector, CoordinateMatrix, double, std::vector<double>);
+  bool coordClash(CoordinateVector, const CoordinateMatrix&, uint, double, const std::vector<double>&);
   CoordinateMatrix createSelfAvoidingWalk(std::vector<double>, CoordinateVector, ENG& eng, uint maxIter=1000);
   std::vector<std::string> &split(const std::string&, char, std::vector<std::string>&);
   std::vector<std::string> split(const std::string&, char);
@@ -64,6 +48,17 @@ namespace util {
   std::vector<double> splitDbl(const std::string&, char);
   std::map<std::string, std::string> makeMap(std::vector<std::string>, std::vector<std::string>);
   std::string errorLine(uint line_counter, std::string filename);
+
+  // Converts a whole string to a number, e.g. parseNumber<double>("0.2"). Like boost::lexical_cast
+  // (which it replaces), a string that is not entirely a number, such as "1,0.5", is an error.
+  template<typename T> T parseNumber(const std::string &s) {
+    std::istringstream iss(s);
+    T value;
+    if(!(iss >> value) or !(iss >> std::ws).eof()) {
+      throw std::invalid_argument("Could not read '" + s + "' as a number");
+    }
+    return value;
+  }
 
   class MoveException: public std::exception {
   public:

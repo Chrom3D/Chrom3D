@@ -10,23 +10,9 @@ Chrom3D is tested on MacOS & Linux. If you try to install it under Windows, plea
 
 
 ## Dependencies:
-Chrom3D is dependent on the **boost library** (>=1.54). If you do not have it,  you can install it using (e.g. on Ubuntu):
+Chrom3D only needs a C++ compiler that supports C++11 (for example g++ or clang++). It no longer depends on the boost library.
 
-`sudo apt-get install libboost-dev`
-
-Otherwise, go to http://www.boost.org/users/download/
-
-If you have boost installed, but still have installation problems when running `make`, find the boost directory using following command:
-
-`whereis boost`
-
-Then add the boost path to the Makefile:
-```
-all:
-    g++ -I [insert path from 'whereis boost' here] -I $(TCLAPINCLUDE) $(SRCPATH)/Util.cpp $(SRCPATH)/Bead.cpp $(SRCPATH)/Chromosome.cpp $(SRCPATH)/Randomizer.cpp $(SRCPATH)/Constraint.cpp $(SRCPATH)/Model.cpp $(SRCPATH)/MCMC.cpp $(SRCPATH)/Chrom3D.cpp -o Chrom3D
-```
-
-Then, `make` should work.
+On MacOS, the compiler comes with the Xcode Command Line Tools (`xcode-select --install`). On Ubuntu: `sudo apt-get install g++ make`.
 
 
 ## Software for visualization of final structures
