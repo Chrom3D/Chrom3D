@@ -3,11 +3,19 @@
 using namespace std;
 namespace util {
 
+// About std::fma below: fma(a,b,c) is a*b+c with a single rounding (a fused multiply-add).
+// Chrom3D built with Clang on Apple Silicon (e.g. with the Xcode compiler) uses fused multiply-adds in
+// exactly these places, because Clang fuses a*b+c written in one expression when the processor has the
+// instruction. Other compilers and settings fuse in other places (GCC also across statements, builds for
+// most x86 processors not at all), so the build turns that off (-ffp-contract=off, see the Makefile) and
+// the fused operations are written out here instead. That way the arithmetic, and so the results, are the
+// same with every compiler.
+
 // Replaces boost::numeric::ublas::norm_2 (the Euclidean length of a vector)
 static double norm_2(const CoordinateVector &vec) {
   double t = 0;
   for(uint i=0; i!=vec.size(); i++) {
-    t += vec(i) * vec(i);
+    t = std::fma(vec(i), vec(i), t); // t += vec(i) * vec(i)
   }
   return sqrt(t);
 }
@@ -35,8 +43,9 @@ CoordinateVector normalizeVector(CoordinateVector vec) {
 CoordinateMatrix rotatePointsAroundArbitraryAxis(double theta, CoordinateVector startPoint, CoordinateVector endPoint, CoordinateMatrix mat) {
   CoordinateVector rU = normalizeVector(startPoint-endPoint); // Normalized rotation vector
 
-  double C = cos(theta);
-  double S = sin(theta);
+  double S;
+  double C;
+  sinCos(theta, S, C); // S = sin(theta), C = cos(theta)
   double t = 1 - C;
   double ux = rU(0);
   double uy = rU(1);
@@ -44,15 +53,16 @@ CoordinateMatrix rotatePointsAroundArbitraryAxis(double theta, CoordinateVector 
 
   CoordinateMatrix rotMat(3,3);
   
-  rotMat(0,0) = t*ux*ux + C;
-  rotMat(1,0) = t*ux*uy + S*uz;
-  rotMat(2,0) = t*ux*uz - S*uy;
-  rotMat(0,1) = t*ux*uy - S*uz;
-  rotMat(1,1) = t*uy*uy + C;
-  rotMat(2,1) =  t*uy*uz + S*ux;
-  rotMat(0,2) = t*ux*uz + S*uy;
-  rotMat(1,2) = t*uy*uz - S*ux;
-  rotMat(2,2) =  t*uz*uz + C;
+  // In each entry the first product is fused with the addition (fma), see the top of this file:
+  rotMat(0,0) = std::fma(t*ux, ux, C);       // t*ux*ux + C
+  rotMat(1,0) = std::fma(t*ux, uy, S*uz);    // t*ux*uy + S*uz
+  rotMat(2,0) = std::fma(t*ux, uz, -(S*uy)); // t*ux*uz - S*uy
+  rotMat(0,1) = std::fma(t*ux, uy, -(S*uz)); // t*ux*uy - S*uz
+  rotMat(1,1) = std::fma(t*uy, uy, C);       // t*uy*uy + C
+  rotMat(2,1) = std::fma(t*uy, uz, S*ux);    // t*uy*uz + S*ux
+  rotMat(0,2) = std::fma(t*ux, uz, S*uy);    // t*ux*uz + S*uy
+  rotMat(1,2) = std::fma(t*uy, uz, -(S*ux)); // t*uy*uz - S*ux
+  rotMat(2,2) = std::fma(t*uz, uz, C);       // t*uz*uz + C
 
 
   // Same calculation as the earlier ublas version, trans(prod(rotMat, trans(mat - startPoint))) + startPoint,
@@ -62,7 +72,7 @@ CoordinateMatrix rotatePointsAroundArbitraryAxis(double theta, CoordinateVector 
     for(uint i=0; i!=3; i++) {
       double rotated = 0; // row j of the rotated matrix at origo
       for(uint k=0; k!=3; k++) {
-        rotated += rotMat(i,k) * (mat(j,k) - startPoint(k));
+        rotated = std::fma(rotMat(i,k), mat(j,k) - startPoint(k), rotated); // rotated += rotMat(i,k) * (mat(j,k) - startPoint(k))
       }
       res(j,i) = rotated + startPoint(i); // rotated matrix transformed back to original coordinate system
     }
@@ -80,7 +90,7 @@ double unif_real(double min, double max, ENG &eng) {
   for(;;) {
     double numerator = static_cast<double>(eng() - ENG::min());
     double divisor = static_cast<double>(ENG::max() - ENG::min()) + 1;
-    double result = numerator / divisor * (max - min) + min;
+    double result = std::fma(numerator / divisor, max - min, min); // numerator / divisor * (max - min) + min
     if(result < max) return result;
   }
 }
@@ -110,7 +120,7 @@ bool coordClash(double x1, double y1, double z1, double x2, double y2, double z2
   /*cout.precision(16);
   cout << "Is " <<  (pow(x1-x2,2) + pow(y1-y2,2) + pow(z1-z2,2)) << " < " << pow(radius1+radius2,2) << endl;
   cout << ((pow(x1-x2,2) + pow(y1-y2,2) + pow(z1-z2,2)) < pow(radius1+radius2,2))  << endl;*/
-  return (pow(x1-x2,2) + pow(y1-y2,2) + pow(z1-z2,2)) < pow(radius1+radius2,2)-PRECISIONCONST;
+  return (square(x1-x2) + square(y1-y2) + square(z1-z2)) < square(radius1+radius2)-PRECISIONCONST;
 }
 
 bool coordClash(CoordinateVector vec1, CoordinateVector vec2, double radius1, double radius2) {
@@ -148,8 +158,11 @@ CoordinateMatrix createSelfAvoidingWalk(vector<double> radii, CoordinateVector o
     for(j=0; j != maxIter; j++) {
       double theta = unif_real(0, 2*PI, eng);
       z = unif_real(-R,R, eng);
-      x = sqrt(pow(R,2) - pow(z,2)) * cos(theta); // OBS: Speed up by doing sqrt only once??
-      y = sqrt(pow(R,2) - pow(z,2)) * sin(theta); // Archimedes method (see http://tinyurl.com/nquq2d9)
+      double sinTheta;
+      double cosTheta;
+      sinCos(theta, sinTheta, cosTheta);
+      x = sqrt(square(R) - square(z)) * cosTheta; // OBS: Speed up by doing sqrt only once??
+      y = sqrt(square(R) - square(z)) * sinTheta; // Archimedes method (see http://tinyurl.com/nquq2d9)
 
       x += prevCoords(0);
       y += prevCoords(1);

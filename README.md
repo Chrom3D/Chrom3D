@@ -10,7 +10,7 @@ Chrom3D is tested on MacOS & Linux. If you try to install it under Windows, plea
 
 
 ## Dependencies:
-Chrom3D only needs a C++ compiler that supports C++11 (for example g++ or clang++). It no longer depends on the boost library.
+Chrom3D only needs a C++ compiler that supports C++17 (for example g++ 8 or newer, or clang++ 7 or newer). It no longer depends on the boost library.
 
 On MacOS, the compiler comes with the Xcode Command Line Tools (`xcode-select --install`). On Ubuntu: `sudo apt-get install g++ make`.
 
@@ -23,7 +23,9 @@ The final structures from Chrom3D are saved in "cmm" format that can be visualiz
 Download Chrom3D source package here:
 https://github.com/Chrom3D/Chrom3D/releases/tag/v1.0.2
 
-Enter Chrom3D directory and compile the program by typing `make` in the terminal.
+Enter Chrom3D directory and compile the program by typing `make` in the terminal. This uses the default C++ compiler (`c++` or `g++`); another compiler can be chosen with e.g. `make CXX=clang++`.
+
+Chrom3D gives the same results (for the same input, options and seed) whichever compiler or optimisation level is used, on the same operating system and type of processor. If you compile it without the Makefile, keep the option `-ffp-contract=off`, otherwise the results can depend on the compiler. Different operating systems or processor types can give slightly different results, because their math libraries compute functions like `sin` and `exp` slightly differently.
 
 The resulting Chrom3D binary should then be created for you in this folder. If you want `Chrom3D` available in your path, you can move the binary to somewhere available in your `$PATH`, for example `~/bin/`. 
 

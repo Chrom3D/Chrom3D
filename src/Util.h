@@ -9,7 +9,8 @@
 
 //#include "Bead.h"
 //#include "Chromosome.h"
-#include <math.h> 
+#include <math.h>
+#include <cmath>
 #include <iostream>
 #include <random>
 #include <numeric>
@@ -32,6 +33,26 @@ const double PRECISIONCONST=1.0e-15;
 
 namespace util {
   const double PI=3.14159265358979323846264338327950;
+
+  // x*x. Used instead of pow(x,2): when optimising, Clang replaces pow(x,2) by x*x (so that is what
+  // Chrom3D computed), but the pow function itself sometimes differs from x*x in the last bit, and not
+  // every compiler or optimisation level makes that replacement.
+  inline double square(double x) { return x * x; }
+
+  // Sets s = sin(theta) and c = cos(theta). On macOS, Clang (when optimising) computes the two together
+  // with the math library's __sincos_stret, which sometimes differs in the last bit from separate sin()
+  // and cos() calls. It is called directly so that the result does not depend on the compiler.
+  inline void sinCos(double theta, double &s, double &c) {
+#if defined(__APPLE__)
+    struct __double2 res = __sincos_stret(theta);
+    s = res.__sinval;
+    c = res.__cosval;
+#else
+    s = sin(theta);
+    c = cos(theta);
+#endif
+  }
+
   double euclideanDistance(CoordinateVector, CoordinateVector);
   CoordinateMatrix repeatVector(CoordinateVector, uint);
   CoordinateVector normalizeVector(CoordinateVector);
@@ -63,7 +84,7 @@ namespace util {
   class MoveException: public std::exception {
   public:
     MoveException();
-    const char* what(){return "Unacceptable move!";}
+    const char* what() const noexcept override {return "Unacceptable move!";}
   };
 
 }

@@ -847,7 +847,6 @@ uint Model::numberOfChromosomes() {
 
 void Model::resetAllChromosomes(uint maxAttempts /*=1000*/) { //, bool updateClash /*=false*/) {
   vector<Chromosome>::iterator chriter;
-  BeadIterator beaditer;  
   double L = (this->getTotalChrLength() / this->numberOfChromosomes()) * 0.1;
   for(chriter = chromosomes.begin(); chriter != chromosomes.end(); chriter++) {
     vector<double> radii;
@@ -940,7 +939,7 @@ double Model::getTotalBeadVolume() {
   double res = 0;
   for(chriter = chromosomes.begin(); chriter != chromosomes.end(); chriter++) {
     for(beaditer=chriter->begin(); beaditer!=chriter->end(); beaditer++) {
-      res += (4.0/3.0) * util::PI * pow(beaditer->getRadius(),3);
+      res = std::fma((4.0/3.0) * util::PI, pow(beaditer->getRadius(),3), res); // res += (4.0/3.0) * util::PI * pow(radius,3), fused as in Util.cpp
     }
   }
   return res;
@@ -962,7 +961,6 @@ void Model::rescaleBeadSizes(double occupancyFactor) {
   assert(this->hasNucleus);
   vector<Chromosome>::iterator chriter;
   BeadIterator beaditer;
-  double beadVol = this->getTotalBeadVolume();
   double genomeLength = this->getTotalGenomeLength();
   for(chriter = chromosomes.begin(); chriter != chromosomes.end(); chriter++) {
     for(beaditer=chriter->begin(); beaditer!=chriter->end(); beaditer++) {
