@@ -939,7 +939,7 @@ double Model::getTotalBeadVolume() {
   double res = 0;
   for(chriter = chromosomes.begin(); chriter != chromosomes.end(); chriter++) {
     for(beaditer=chriter->begin(); beaditer!=chriter->end(); beaditer++) {
-      res = std::fma((4.0/3.0) * util::PI, pow(beaditer->getRadius(),3), res); // res += (4.0/3.0) * util::PI * pow(radius,3), fused as in Util.cpp
+      res = util::mulAdd((4.0/3.0) * util::PI, pow(beaditer->getRadius(),3), res); // res += (4.0/3.0) * util::PI * pow(radius,3), with mulAdd as in Util.cpp
     }
   }
   return res;

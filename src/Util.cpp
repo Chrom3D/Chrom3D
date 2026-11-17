@@ -3,19 +3,20 @@
 using namespace std;
 namespace util {
 
-// About std::fma below: fma(a,b,c) is a*b+c with a single rounding (a fused multiply-add).
-// Chrom3D built with Clang on Apple Silicon (e.g. with the Xcode compiler) uses fused multiply-adds in
-// exactly these places, because Clang fuses a*b+c written in one expression when the processor has the
-// instruction. Other compilers and settings fuse in other places (GCC also across statements, builds for
-// most x86 processors not at all), so the build turns that off (-ffp-contract=off, see the Makefile) and
-// the fused operations are written out here instead. That way the arithmetic, and so the results, are the
-// same with every compiler.
+// About mulAdd below (see Util.h): mulAdd(a,b,c) is a*b+c, as a fused multiply-add (a single rounding)
+// on 64-bit ARM and as a multiplication followed by an addition on other processors. These are exactly
+// the places where the earlier versions of Chrom3D, built with Clang on Apple Silicon (e.g. with the
+// Xcode compiler), used fused multiply-adds, because Clang fuses a*b+c written in one expression when
+// the processor has the instruction. Builds for x86-64 (e.g. with g++ on Linux) used none. Compilers
+// fuse in different places on their own (GCC also across statements), so the build turns that off
+// (-ffp-contract=off, see the Makefile) and the fused operations are written out here instead. That way
+// the results are the same as before on each type of processor, with every compiler.
 
 // Replaces boost::numeric::ublas::norm_2 (the Euclidean length of a vector)
 static double norm_2(const CoordinateVector &vec) {
   double t = 0;
   for(uint i=0; i!=vec.size(); i++) {
-    t = std::fma(vec(i), vec(i), t); // t += vec(i) * vec(i)
+    t = mulAdd(vec(i), vec(i), t); // t += vec(i) * vec(i)
   }
   return sqrt(t);
 }
@@ -53,16 +54,16 @@ CoordinateMatrix rotatePointsAroundArbitraryAxis(double theta, CoordinateVector 
 
   CoordinateMatrix rotMat(3,3);
   
-  // In each entry the first product is fused with the addition (fma), see the top of this file:
-  rotMat(0,0) = std::fma(t*ux, ux, C);       // t*ux*ux + C
-  rotMat(1,0) = std::fma(t*ux, uy, S*uz);    // t*ux*uy + S*uz
-  rotMat(2,0) = std::fma(t*ux, uz, -(S*uy)); // t*ux*uz - S*uy
-  rotMat(0,1) = std::fma(t*ux, uy, -(S*uz)); // t*ux*uy - S*uz
-  rotMat(1,1) = std::fma(t*uy, uy, C);       // t*uy*uy + C
-  rotMat(2,1) = std::fma(t*uy, uz, S*ux);    // t*uy*uz + S*ux
-  rotMat(0,2) = std::fma(t*ux, uz, S*uy);    // t*ux*uz + S*uy
-  rotMat(1,2) = std::fma(t*uy, uz, -(S*ux)); // t*uy*uz - S*ux
-  rotMat(2,2) = std::fma(t*uz, uz, C);       // t*uz*uz + C
+  // In each entry the first product and the addition are done with mulAdd, see the top of this file:
+  rotMat(0,0) = mulAdd(t*ux, ux, C);       // t*ux*ux + C
+  rotMat(1,0) = mulAdd(t*ux, uy, S*uz);    // t*ux*uy + S*uz
+  rotMat(2,0) = mulAdd(t*ux, uz, -(S*uy)); // t*ux*uz - S*uy
+  rotMat(0,1) = mulAdd(t*ux, uy, -(S*uz)); // t*ux*uy - S*uz
+  rotMat(1,1) = mulAdd(t*uy, uy, C);       // t*uy*uy + C
+  rotMat(2,1) = mulAdd(t*uy, uz, S*ux);    // t*uy*uz + S*ux
+  rotMat(0,2) = mulAdd(t*ux, uz, S*uy);    // t*ux*uz + S*uy
+  rotMat(1,2) = mulAdd(t*uy, uz, -(S*ux)); // t*uy*uz - S*ux
+  rotMat(2,2) = mulAdd(t*uz, uz, C);       // t*uz*uz + C
 
 
   // Same calculation as the earlier ublas version, trans(prod(rotMat, trans(mat - startPoint))) + startPoint,
@@ -72,7 +73,7 @@ CoordinateMatrix rotatePointsAroundArbitraryAxis(double theta, CoordinateVector 
     for(uint i=0; i!=3; i++) {
       double rotated = 0; // row j of the rotated matrix at origo
       for(uint k=0; k!=3; k++) {
-        rotated = std::fma(rotMat(i,k), mat(j,k) - startPoint(k), rotated); // rotated += rotMat(i,k) * (mat(j,k) - startPoint(k))
+        rotated = mulAdd(rotMat(i,k), mat(j,k) - startPoint(k), rotated); // rotated += rotMat(i,k) * (mat(j,k) - startPoint(k))
       }
       res(j,i) = rotated + startPoint(i); // rotated matrix transformed back to original coordinate system
     }
@@ -90,7 +91,7 @@ double unif_real(double min, double max, ENG &eng) {
   for(;;) {
     double numerator = static_cast<double>(eng() - ENG::min());
     double divisor = static_cast<double>(ENG::max() - ENG::min()) + 1;
-    double result = std::fma(numerator / divisor, max - min, min); // numerator / divisor * (max - min) + min
+    double result = mulAdd(numerator / divisor, max - min, min); // numerator / divisor * (max - min) + min
     if(result < max) return result;
   }
 }
@@ -141,6 +142,12 @@ bool coordClash(CoordinateVector vec, const CoordinateMatrix &mat, uint nRows, d
 }
 
 
+#if defined(__APPLE__)
+// sin() and cos() in functions of their own, so that the compiler cannot merge the two calls into
+// __sincos_stret (which sometimes differs in the last bit). See createSelfAvoidingWalk.
+__attribute__((noinline)) static double sinNotMerged(double x) { return sin(x); }
+__attribute__((noinline)) static double cosNotMerged(double x) { return cos(x); }
+#endif
 
 CoordinateMatrix createSelfAvoidingWalk(vector<double> radii, CoordinateVector origin, ENG& eng, uint maxIter) {
   assert(radii.size() > 0);
@@ -158,9 +165,17 @@ CoordinateMatrix createSelfAvoidingWalk(vector<double> radii, CoordinateVector o
     for(j=0; j != maxIter; j++) {
       double theta = unif_real(0, 2*PI, eng);
       z = unif_real(-R,R, eng);
-      double sinTheta;
-      double cosTheta;
-      sinCos(theta, sinTheta, cosTheta);
+      // sin and cos as computed here by the earlier versions: on macOS, Clang used separate sin() and cos()
+      // calls (not __sincos_stret as in rotatePointsAroundArbitraryAxis). A difference in the last bit can
+      // change the results, because each new bead is placed exactly touching the previous one, so the
+      // clash test below is decided by rounding. Elsewhere compilers merge the calls as before (GCC: sincos).
+#if defined(__APPLE__)
+      double sinTheta = sinNotMerged(theta);
+      double cosTheta = cosNotMerged(theta);
+#else
+      double sinTheta = sin(theta);
+      double cosTheta = cos(theta);
+#endif
       x = sqrt(square(R) - square(z)) * cosTheta; // OBS: Speed up by doing sqrt only once??
       y = sqrt(square(R) - square(z)) * sinTheta; // Archimedes method (see http://tinyurl.com/nquq2d9)
 

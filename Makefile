@@ -10,8 +10,9 @@ CXXFLAGS = -O3
 # Always used:
 # -ffp-contract=off: the compiler must not merge a*b+c into a fused multiply-add on its own. Compilers
 #   do that differently (and it depends on the CPU and the optimisation level), which made the results
-#   depend on the compiler. Where Chrom3D uses fused multiply-adds they are written out in the source
-#   (std::fma, see src/Util.cpp), so with this option all compilers give the same results.
+#   depend on the compiler. Where Chrom3D uses fused multiply-adds (on 64-bit ARM, e.g. Apple Silicon,
+#   as the earlier versions did there) they are written out in the source (util::mulAdd, see
+#   src/Util.h), so with this option all compilers give the same results on the same type of processor.
 REQUIRED_FLAGS = -std=c++17 -ffp-contract=off
 
 all: Chrom3D

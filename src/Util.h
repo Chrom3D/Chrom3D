@@ -39,9 +39,23 @@ namespace util {
   // every compiler or optimisation level makes that replacement.
   inline double square(double x) { return x * x; }
 
-  // Sets s = sin(theta) and c = cos(theta). On macOS, Clang (when optimising) computes the two together
-  // with the math library's __sincos_stret, which sometimes differs in the last bit from separate sin()
-  // and cos() calls. It is called directly so that the result does not depend on the compiler.
+  // a*b+c, rounded as the earlier versions of Chrom3D (built with their Makefile) rounded it on this
+  // type of processor: on 64-bit ARM (e.g. Apple Silicon) as one fused multiply-add (a single rounding),
+  // because Clang fuses a*b+c written in one expression there; on other processors (e.g. x86-64, whose
+  // basic instruction set has no fused multiply-add) as a multiplication followed by an addition.
+  // The build turns off any other fusing by the compiler (-ffp-contract=off, see the Makefile), so the
+  // results depend on the type of processor (as before) but not on the compiler or optimisation level.
+#if defined(__aarch64__) || defined(__arm64__)
+  inline double mulAdd(double a, double b, double c) { return std::fma(a, b, c); }
+#else
+  inline double mulAdd(double a, double b, double c) { return a * b + c; }
+#endif
+
+  // Sets s = sin(theta) and c = cos(theta) in rotatePointsAroundArbitraryAxis. On macOS, Clang (when
+  // optimising) computed the two together there with the math library's __sincos_stret, which sometimes
+  // differs in the last bit from separate sin() and cos() calls. It is called directly so that the result
+  // does not depend on the compiler. (createSelfAvoidingWalk uses separate calls, see Util.cpp.) Other
+  // systems use sin() and cos(), which compilers merge where they did before (GCC into sincos).
   inline void sinCos(double theta, double &s, double &c) {
 #if defined(__APPLE__)
     struct __double2 res = __sincos_stret(theta);
