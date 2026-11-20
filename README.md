@@ -10,23 +10,9 @@ Chrom3D is tested on MacOS & Linux. If you try to install it under Windows, plea
 
 
 ## Dependencies:
-Chrom3D is dependent on the **boost library** (>=1.54). If you do not have it,  you can install it using (e.g. on Ubuntu):
+Chrom3D only needs a C++ compiler that supports C++11 (for example g++ 4.8.1 or newer, or clang++ 3.3 or newer). It no longer depends on the boost library.
 
-`sudo apt-get install libboost-dev`
-
-Otherwise, go to http://www.boost.org/users/download/
-
-If you have boost installed, but still have installation problems when running `make`, find the boost directory using following command:
-
-`whereis boost`
-
-Then add the boost path to the Makefile:
-```
-all:
-    g++ -I [insert path from 'whereis boost' here] -I $(TCLAPINCLUDE) $(SRCPATH)/Util.cpp $(SRCPATH)/Bead.cpp $(SRCPATH)/Chromosome.cpp $(SRCPATH)/Randomizer.cpp $(SRCPATH)/Constraint.cpp $(SRCPATH)/Model.cpp $(SRCPATH)/MCMC.cpp $(SRCPATH)/Chrom3D.cpp -o Chrom3D
-```
-
-Then, `make` should work.
+On MacOS, the compiler comes with the Xcode Command Line Tools (`xcode-select --install`). On Ubuntu: `sudo apt-get install g++ make`.
 
 
 ## Software for visualization of final structures
@@ -37,7 +23,9 @@ The final structures from Chrom3D are saved in "cmm" format that can be visualiz
 Download Chrom3D source package here:
 https://github.com/Chrom3D/Chrom3D/releases/tag/v1.0.2
 
-Enter Chrom3D directory and compile the program by typing `make` in the terminal.
+Enter Chrom3D directory and compile the program by typing `make` in the terminal. This uses the default C++ compiler (`c++` or `g++`); another compiler can be chosen with e.g. `make CXX=clang++`.
+
+Chrom3D gives the same results (for the same input, options and seed) whichever compiler or optimisation level is used, on the same operating system and type of processor. These are also the results of the earlier versions (which needed boost) built with their Makefile on the same system, e.g. with the Xcode compiler on a Mac or with g++ on Linux x86-64 (but not earlier builds made with GCC on 64-bit ARM processors, which rounded some calculations differently). If you compile it without the Makefile, keep the option `-ffp-contract=off`, otherwise the results can depend on the compiler. Different operating systems or processor types give slightly different results, as before: their math libraries compute functions like `sin` and `exp` slightly differently, and on 64-bit ARM processors (e.g. Apple Silicon) some multiplications and additions are rounded together (fused multiply-add), unlike on x86-64.
 
 The resulting Chrom3D binary should then be created for you in this folder. If you want `Chrom3D` available in your path, you can move the binary to somewhere available in your `$PATH`, for example `~/bin/`. 
 

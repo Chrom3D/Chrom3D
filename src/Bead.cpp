@@ -86,7 +86,7 @@ ostream& operator<<(ostream& os, const Bead& b) {
 }
 
 double operator-(const Bead& b1, const Bead& b2) {
-  return sqrt(pow(b1.x-b2.x,2) + pow(b1.y-b2.y,2) + pow(b1.z-b2.z,2));
+  return sqrt(util::square(b1.x-b2.x) + util::square(b1.y-b2.y) + util::square(b1.z-b2.z));
 }
 
 bool operator<(const Bead& b1, const Bead& b2) {

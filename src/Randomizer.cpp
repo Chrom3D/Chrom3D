@@ -5,22 +5,14 @@ using namespace std;
 
 Move::Move(Chromosome &chr): chr(chr) {}
 
-boost::container::static_vector<Bead, MAXSIZE>::iterator Move::begin() {
+BeadIterator Move::begin() {
   return chr.begin() + start;
 }
 
-boost::container::static_vector<Bead, MAXSIZE>::iterator Move::end() {
+BeadIterator Move::end() {
   return chr.begin() + stop;
 }
 
-CoordinateMatrix::const_iterator1 Move::moveBegin() {
-  return mat.begin1();
-}
-
-CoordinateMatrix::const_iterator1 Move::moveEnd() {
-  return mat.end1();
-}
- 
 void Move::validate() {
   assert(start <= stop);
   assert(mat.size1() == (stop-start)+1);
@@ -75,7 +67,7 @@ Move ArmWiggleRandomizer::randomize(Chromosome &chr, ENG &eng) {
   bool goRight = util::unif_int(0,1, eng);
   vector<double> radii;
 
-  boost::container::static_vector<Bead,MAXSIZE>::iterator beaditer;
+  BeadIterator beaditer;
   if(goRight) {
     for(beaditer=chr.begin()+r1; beaditer!=chr.end(); beaditer++) {
       radii.push_back(beaditer->getRadius());

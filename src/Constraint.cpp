@@ -20,7 +20,7 @@ pair<string, string> Constraint::getBeadIDs() {
 double Constraint::eval() {
   double beadDist=(*bead1) - (*bead2);
   if(beadDist > this->lower and beadDist < this->upper) {
-    return this->k * pow(beadDist - this->distance,2);
+    return this->k * util::square(beadDist - this->distance);
   }
   return 0;
 }
