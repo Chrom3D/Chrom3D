@@ -10,7 +10,7 @@ Chrom3D is tested on MacOS & Linux. If you try to install it under Windows, plea
 
 
 ## Dependencies:
-Chrom3D only needs a C++ compiler that supports C++17 (for example g++ 8 or newer, or clang++ 7 or newer). It no longer depends on the boost library.
+Chrom3D only needs a C++ compiler that supports C++11 (for example g++ 4.8.1 or newer, or clang++ 3.3 or newer). It no longer depends on the boost library.
 
 On MacOS, the compiler comes with the Xcode Command Line Tools (`xcode-select --install`). On Ubuntu: `sudo apt-get install g++ make`.
 
